@@ -2099,6 +2099,8 @@ let state = {
   kontakPemilik: "0817201958",
   isMobile: window.innerWidth <= 700,
   openHistoryFor: null,
+  unitFilterStatus: "all",
+  unitFilterProp: "all",
   docModalTenant: null,
   printIncomeId: null,
 };
@@ -2456,11 +2458,32 @@ function renderDashboard(){
   return `
     <h2 style="margin:0 0 4px;font-size:20px;font-weight:700;color:#1B2A41;">Dashboard</h2>
     <p style="margin:0 0 20px;font-size:13px;color:#6B7280;">Ringkasan keuangan dan okupansi seluruh properti.</p>
-    <div class="flex-wrap-gap" style="margin-bottom:20px;">
+    <div class="flex-wrap-gap" style="margin-bottom:14px;">
       ${statCard("Pemasukan",rupiah(totalIncome),ICONS.trend,"good")}
       ${statCard("Pengeluaran",rupiah(totalExpense),ICONS.trenddown,"bad")}
       ${statCard("Arus kas bersih",rupiah(netCashflow),ICONS.wallet,netCashflow>=0?"good":"bad")}
-      ${statCard("Okupansi",occupancyRate+"%",ICONS.units,"accent",`${occupiedCount} dari ${units.length} unit terisi`)}
+    </div>
+    <div class="flex-wrap-gap" style="margin-bottom:20px;">
+      <div class="stat-card">
+        <div style="font-size:12px;color:#6B7280;margin-bottom:4px;">Total kamar</div>
+        <div class="mono" style="font-size:20px;font-weight:700;color:#1B2A41;">${units.length}</div>
+      </div>
+      <div class="stat-card">
+        <div style="font-size:12px;color:#6B7280;margin-bottom:4px;">Terisi</div>
+        <div class="mono" style="font-size:20px;font-weight:700;color:#27500A;">${occupiedCount}</div>
+      </div>
+      <div class="stat-card">
+        <div style="font-size:12px;color:#6B7280;margin-bottom:4px;">Kosong</div>
+        <div class="mono" style="font-size:20px;font-weight:700;color:#8A6A1D;">${units.length-occupiedCount}</div>
+      </div>
+      <div class="stat-card">
+        <div style="font-size:12px;color:#6B7280;margin-bottom:4px;">Jumlah penghuni</div>
+        <div class="mono" style="font-size:20px;font-weight:700;color:#1B2A41;">${tenants.length}</div>
+      </div>
+      <div class="stat-card">
+        <div style="font-size:12px;color:#6B7280;margin-bottom:4px;">Okupansi</div>
+        <div class="mono" style="font-size:20px;font-weight:700;color:#1B2A41;">${occupancyRate}%</div>
+      </div>
     </div>
     ${telatCount>0?`<div style="display:flex;align-items:center;gap:8px;background:#FCEBEB;color:#791F1F;padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:14px;">${ICONS.alert} Ada ${telatCount} pembayaran berstatus telat. Cek tab Pemasukan.</div>`:""}
     ${remindersHtml}
@@ -2479,13 +2502,53 @@ function renderDashboard(){
 
 // ================= UNITS TAB =================
 function renderUnitsTab(){
-  const groups = properties.map(p=>{
-    const propUnits = units.filter(u=>u.propertiId===p.id);
+  const filterStatus = state.unitFilterStatus || "all";
+  const filterProp = state.unitFilterProp || "all";
+
+  const propOptionsHtml = `<option value="all">Semua properti</option>` +
+    properties.map(p=>`<option value="${p.id}" ${filterProp===p.id?"selected":""}>${esc(p.nama)}</option>`).join("");
+
+  const visibleProperties = properties.filter(p => filterProp==="all" || p.id===filterProp);
+
+  const statUnits = units.filter(u => visibleProperties.some(p=>p.id===u.propertiId));
+  const statTerisi = statUnits.filter(u=>u.status==='terisi').length;
+  const statKosong = statUnits.filter(u=>u.status==='kosong').length;
+  const statPenghuni = tenants.filter(t => { const u=unitById(t.unitId); return u && visibleProperties.some(p=>p.id===u.propertiId); }).length;
+  const statOkupansi = statUnits.length ? Math.round(statTerisi/statUnits.length*100) : 0;
+
+  const statsHtml = `
+    <div class="flex-wrap-gap" style="margin-bottom:16px;">
+      <div class="stat-card">
+        <div style="font-size:12px;color:#6B7280;margin-bottom:4px;">Total kamar</div>
+        <div class="mono" style="font-size:20px;font-weight:700;color:#1B2A41;">${statUnits.length}</div>
+      </div>
+      <div class="stat-card">
+        <div style="font-size:12px;color:#6B7280;margin-bottom:4px;">Terisi</div>
+        <div class="mono" style="font-size:20px;font-weight:700;color:#27500A;">${statTerisi}</div>
+      </div>
+      <div class="stat-card">
+        <div style="font-size:12px;color:#6B7280;margin-bottom:4px;">Kosong</div>
+        <div class="mono" style="font-size:20px;font-weight:700;color:#8A6A1D;">${statKosong}</div>
+      </div>
+      <div class="stat-card">
+        <div style="font-size:12px;color:#6B7280;margin-bottom:4px;">Jumlah penghuni</div>
+        <div class="mono" style="font-size:20px;font-weight:700;color:#1B2A41;">${statPenghuni}</div>
+      </div>
+      <div class="stat-card">
+        <div style="font-size:12px;color:#6B7280;margin-bottom:4px;">Okupansi</div>
+        <div class="mono" style="font-size:20px;font-weight:700;color:#1B2A41;">${statOkupansi}%</div>
+      </div>
+    </div>`;
+
+  const groups = visibleProperties.map(p=>{
+    let propUnits = units.filter(u=>u.propertiId===p.id);
+    if(filterStatus!=="all") propUnits = propUnits.filter(u=>u.status===filterStatus);
+    if(propUnits.length===0 && filterStatus!=="all") return "";
     const cards = propUnits.map(u=>{
       const isOpen = state.openHistoryFor===u.id;
       const hist = riwayat.filter(r=>r.unitId===u.id).sort((a,b)=>new Date(b.tglMasuk)-new Date(a.tglMasuk));
       const histHtml = isOpen ? `
-        <div style="margin-top:8px;border-top:1px solid #EEECE3;padding-top:8px;">
+        <div style="margin-top:8px;border-top:1px solid rgba(0,0,0,0.08);padding-top:8px;">
           ${hist.length===0?`<div style="font-size:11.5px;color:#9A988F;">Belum ada riwayat.</div>`:
             hist.map(r=>`<div style="font-size:11.5px;margin-bottom:6px;">
               <div style="font-weight:600;color:#1B2A41;">${esc(r.nama)}</div>
@@ -2497,16 +2560,22 @@ function renderUnitsTab(){
           <div style="display:flex;justify-content:space-between;"><span style="color:#6B7280;">Bulanan</span><span class="mono" style="font-weight:600;">${rupiah(u.hargaBulanan)}</span></div>
           <div style="display:flex;justify-content:space-between;"><span style="color:#6B7280;">Tahunan (11 bln)</span><span class="mono" style="font-weight:600;">${rupiah(u.hargaTahunan)}</span></div>
         </div>` : `<div style="font-size:11.5px;color:#9A988F;">Harga diatur di level rumah sewa (patungan)</div>`;
+      const isTerisi = u.status==='terisi';
+      const cardBg = isTerisi ? "#F3FAF0" : "#FFF9EC";
+      const cardBorder = isTerisi ? "#BFE3AE" : "#F0D9A0";
       return `
-      <div class="unit-card">
+      <div class="unit-card" style="background:${cardBg};border-color:${cardBorder};border-left:4px solid ${isTerisi?'#5FA83C':'#D9A441'};">
         <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
           <span style="font-weight:600;font-size:14px;color:#1B2A41;">${esc(u.nomor)}</span>
-          ${badge(u.status,u.status==='terisi'?'#27500A':'#5F5E5A',u.status==='terisi'?'#EAF3DE':'#F1EFE8')}
+          ${badge(u.status,isTerisi?'#27500A':'#8A6A1D',isTerisi?'#DDF0D2':'#FBEBC8')}
         </div>
         <div style="font-size:12px;color:#6B7280;margin-bottom:8px;">${esc(u.tipeKamar)}</div>
         <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px;">${u.fasilitas.map(f=>badge(esc(f),"#5F5E5A","#F1EFE8")).join(" ")}</div>
         ${hargaBlock}
-        <button onclick="toggleHistory('${u.id}')" style="margin-top:10px;width:100%;display:flex;align-items:center;justify-content:center;gap:6px;border:1px solid #E4E2D8;background:#F7F8FA;border-radius:8px;padding:6px 0;font-size:11.5px;color:#6B7280;cursor:pointer;font-family:inherit;">${ICONS.history} Riwayat penyewa</button>
+        <div style="display:flex;gap:6px;margin-top:10px;">
+          <button onclick="toggleHistory('${u.id}')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;border:1px solid rgba(0,0,0,0.12);background:rgba(255,255,255,0.6);border-radius:8px;padding:6px 0;font-size:11.5px;color:#6B7280;cursor:pointer;font-family:inherit;">${ICONS.history} Riwayat</button>
+          <button onclick="toggleUnitStatus('${u.id}')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;border:1px solid rgba(0,0,0,0.12);background:rgba(255,255,255,0.6);border-radius:8px;padding:6px 0;font-size:11.5px;color:#6B7280;cursor:pointer;font-family:inherit;">${isTerisi?"Tandai kosong":"Tandai terisi"}</button>
+        </div>
         ${histHtml}
       </div>`;
     }).join("");
@@ -2533,9 +2602,22 @@ function renderUnitsTab(){
         <button class="btn btn-primary" onclick="openAddUnitForm()">${ICONS.plus} Kamar</button>
       </div>
     </div>
-    <p style="margin:0 0 20px;font-size:13px;color:#6B7280;">Kelola varian harga dan fasilitas tiap kamar, termasuk kost multi kamar, kost 1 pintu, dan rumah sewa utuh.</p>
-    ${groups}
+    <p style="margin:0 0 14px;font-size:13px;color:#6B7280;">Kelola varian harga dan fasilitas tiap kamar, termasuk kost multi kamar, kost 1 pintu, dan rumah sewa utuh.</p>
+    ${statsHtml}
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;">
+      <select onchange="state.unitFilterStatus=this.value; render();" style="flex:1;min-width:130px;">
+        <option value="all" ${filterStatus==="all"?"selected":""}>Semua status</option>
+        <option value="terisi" ${filterStatus==="terisi"?"selected":""}>Terisi</option>
+        <option value="kosong" ${filterStatus==="kosong"?"selected":""}>Kosong</option>
+      </select>
+      <select onchange="state.unitFilterProp=this.value; render();" style="flex:1;min-width:130px;">${propOptionsHtml}</select>
+    </div>
+    ${groups || `<p style="font-size:13px;color:#9A988F;">Tidak ada kamar yang cocok dengan filter ini.</p>`}
   `;
+}
+function toggleUnitStatus(unitId){
+  units = units.map(u => u.id===unitId ? {...u, status: u.status==='terisi'?'kosong':'terisi'} : u);
+  render();
 }
 function toggleHistory(unitId){
   state.openHistoryFor = state.openHistoryFor===unitId ? null : unitId;
