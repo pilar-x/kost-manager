@@ -9,6 +9,7 @@
 <link rel="icon" href="icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <style>
 :root{
   --dark:#173F27; --dark2:#0F2E1A; --mid:#2F5C3C;
@@ -2111,6 +2112,19 @@ window.addEventListener("resize", () => { state.isMobile = window.innerWidth <= 
 
 // ================= HELPERS =================
 function rupiah(n){ return "Rp " + Math.round(n).toLocaleString("id-ID"); }
+function formatTanggal(dateStr){
+  if(!dateStr) return "-";
+  const parts = dateStr.split("-");
+  if(parts.length!==3) return dateStr;
+  const [y,m,d] = parts;
+  return `${d}-${m}-${y}`;
+}
+function advanceJatuhTempo(dateStr, metodeBayar){
+  const d = new Date(dateStr);
+  if(metodeBayar==="tahunan") d.setFullYear(d.getFullYear()+1);
+  else d.setMonth(d.getMonth()+1);
+  return d.toISOString().slice(0,10);
+}
 function uid(prefix){ return prefix + Date.now() + Math.floor(Math.random()*1000); }
 function propertyById(id){ return properties.find(p=>p.id===id); }
 function unitById(id){ return units.find(u=>u.id===id); }
@@ -2139,7 +2153,7 @@ function waLink(kontak,message){
 function buildTagihanMessage({nama,propNama,unitNomor,tagihan,denda,jatuhTempo}){
   let msg = `Halo ${nama}, ini pengingat pembayaran kost di ${propNama||"-"} kamar ${unitNomor||"-"}.\nJumlah tagihan: ${rupiah(tagihan)}`;
   if(denda>0) msg += ` + denda keterlambatan ${rupiah(denda)} (total ${rupiah(tagihan+denda)})`;
-  msg += `\nJatuh tempo: ${jatuhTempo}\nMohon segera melakukan pembayaran. Terima kasih.`;
+  msg += `\nJatuh tempo: ${formatTanggal(jatuhTempo)}\nMohon segera melakukan pembayaran. Terima kasih.`;
   return msg;
 }
 function ymKey(dateStr){ const d=new Date(dateStr); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"); }
@@ -2173,7 +2187,7 @@ function renderPublicView(){
       : `<div style="font-size:12px;color:#9A988F;margin-bottom:12px;">Hubungi untuk info harga</div>`;
     const belumTersediaBlock = !isAvailable ? `
       <div style="background:#FAEEDA;border-radius:8px;padding:8px 10px;margin-bottom:12px;">
-        <div style="font-size:12px;color:#63430B;font-weight:600;">${ICONS.clock} Perkiraan kosong: ${t?t.jatuhTempo:"-"}</div>
+        <div style="font-size:12px;color:#63430B;font-weight:600;">${ICONS.clock} Perkiraan kosong: ${t?formatTanggal(t.jatuhTempo):"-"}</div>
         <div style="font-size:10.5px;color:#8A6A1D;margin-top:2px;">Tanggal ini jatuh tempo sewa saat ini dan bisa diperpanjang penyewa, jadi bukan kepastian mutlak.</div>
       </div>` : "";
     return `
@@ -2420,12 +2434,15 @@ function renderDashboard(){
         const overdue = days<0;
         const label = overdue?`Telat ${Math.abs(days)} hari`:(days===0?"Jatuh tempo hari ini":`${days} hari lagi`);
         const fg = overdue?"#791F1F":"#633806", bg = overdue?"#FCEBEB":"#FAEEDA";
-        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-top:1px solid #EEECE3;">
+        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-top:1px solid #EEECE3;gap:8px;">
           <div>
             <div style="font-size:13.5px;font-weight:600;color:#1B2A41;">${esc(t.nama)}</div>
-            <div style="font-size:11.5px;color:#9A988F;">${esc(prop?.nama)} · ${esc(u?.nomor)} · jatuh tempo ${t.jatuhTempo}</div>
+            <div style="font-size:11.5px;color:#9A988F;">${esc(prop?.nama)} · ${esc(u?.nomor)} · jatuh tempo ${formatTanggal(t.jatuhTempo)}</div>
           </div>
-          ${badge(label,fg,bg)}
+          <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+            ${badge(label,fg,bg)}
+            <button onclick="openAddIncomeForm('${t.id}')" style="border:1px solid #B5D4F4;background:#E6F1FB;color:#0C447C;border-radius:7px;padding:5px 10px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;">Catat bayar</button>
+          </div>
         </div>`;
       }).join("")}
     </div>` : "";
@@ -2574,7 +2591,7 @@ function renderUnitsTab(){
         ${hargaBlock}
         <div style="display:flex;gap:6px;margin-top:10px;">
           <button onclick="toggleHistory('${u.id}')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;border:1px solid rgba(0,0,0,0.12);background:rgba(255,255,255,0.6);border-radius:8px;padding:6px 0;font-size:11.5px;color:#6B7280;cursor:pointer;font-family:inherit;">${ICONS.history} Riwayat</button>
-          <button onclick="toggleUnitStatus('${u.id}')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;border:1px solid rgba(0,0,0,0.12);background:rgba(255,255,255,0.6);border-radius:8px;padding:6px 0;font-size:11.5px;color:#6B7280;cursor:pointer;font-family:inherit;">${isTerisi?"Tandai kosong":"Tandai terisi"}</button>
+          ${isTerisi ? `<button onclick="markUnitKosong('${u.id}')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;border:1px solid rgba(0,0,0,0.12);background:rgba(255,255,255,0.6);border-radius:8px;padding:6px 0;font-size:11.5px;color:#6B7280;cursor:pointer;font-family:inherit;">Tandai kosong</button>` : `<button onclick="state.tab='tenants'; render();" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;border:1px solid rgba(0,0,0,0.12);background:rgba(255,255,255,0.6);border-radius:8px;padding:6px 0;font-size:11.5px;color:#6B7280;cursor:pointer;font-family:inherit;">${ICONS.plus} Tambah penyewa</button>`}
         </div>
         ${histHtml}
       </div>`;
@@ -2615,8 +2632,13 @@ function renderUnitsTab(){
     ${groups || `<p style="font-size:13px;color:#9A988F;">Tidak ada kamar yang cocok dengan filter ini.</p>`}
   `;
 }
-function toggleUnitStatus(unitId){
-  units = units.map(u => u.id===unitId ? {...u, status: u.status==='terisi'?'kosong':'terisi'} : u);
+function markUnitKosong(unitId){
+  const activeTenant = tenants.find(t=>t.unitId===unitId);
+  if(activeTenant){
+    const ok = confirm(`Kamar ini masih tercatat dihuni oleh ${activeTenant.nama}. Menandai kosong TIDAK menghapus data penyewa tersebut — sebaiknya hapus penyewanya dulu lewat tab Penyewa. Lanjutkan menandai kosong saja?`);
+    if(!ok) return;
+  }
+  units = units.map(u => u.id===unitId ? {...u, status:'kosong'} : u);
   render();
 }
 function toggleHistory(unitId){
@@ -2686,7 +2708,7 @@ function renderTenantsTab(){
       <td><div style="font-weight:600;color:#1B2A41;">${esc(t.nama)}</div><div style="font-size:11.5px;color:#9A988F;">${esc(t.kontak)}</div></td>
       <td>${u?`${esc(prop?.nama)} · ${esc(u.nomor)}`:"-"}</td>
       <td>${badge(t.metodeBayar, t.metodeBayar==='tahunan'?'#8A6A1D':'#0F6E56', t.metodeBayar==='tahunan'?'#FAEEDA':'#E1F5EE')}</td>
-      <td>${t.jatuhTempo}</td>
+      <td>${formatTanggal(t.jatuhTempo)}</td>
       <td class="mono">${rupiah(share)}${dendaBadge}</td>
       <td>
         <div style="display:flex;gap:4px;">
@@ -2856,14 +2878,21 @@ function renderIncomeTab(){
 }
 function removeIncome(id){ income = income.filter(x=>x.id!==id); render(); }
 
-function openAddIncomeForm(){
-  const opts = tenants.map(t=>`<option value="${t.id}">${esc(t.nama)}</option>`).join("");
+function openAddIncomeForm(prefillTenantId){
+  const opts = tenants.map(t=>`<option value="${t.id}" ${prefillTenantId===t.id?"selected":""}>${esc(t.nama)}</option>`).join("");
+  const preTenant = prefillTenantId ? tenantById(prefillTenantId) : null;
+  const preShare = preTenant ? (preTenant.rumahShareTotal ? preTenant.rumahShareTotal/preTenant.rumahJmlOrang : (unitById(preTenant.unitId)?.hargaBulanan||0)) : "";
+  const today = new Date().toISOString().slice(0,10);
   showModal("Catat pemasukan", `
     <div class="field"><label class="field-label">Penyewa</label><select id="fTenantIncome">${opts}</select></div>
-    <div class="field"><label class="field-label">Periode</label><input id="fPeriodeIncome" placeholder="Agu 2026"></div>
-    <div class="field"><label class="field-label">Tanggal bayar</label><input type="date" id="fTglIncome"></div>
-    <div class="field"><label class="field-label">Jumlah (Rp)</label><input type="number" id="fJumlahIncome"></div>
+    <div class="field"><label class="field-label">Periode</label><input id="fPeriodeIncome" placeholder="Agu 2026" value="${preTenant?ymLabel(today.slice(0,7)):""}"></div>
+    <div class="field"><label class="field-label">Tanggal bayar</label><input type="date" id="fTglIncome" value="${today}"></div>
+    <div class="field"><label class="field-label">Jumlah (Rp)</label><input type="number" id="fJumlahIncome" value="${preShare||""}"></div>
     <div class="field"><label class="field-label">Status</label><select id="fStatusIncome"><option value="lunas">Lunas</option><option value="telat">Telat</option></select></div>
+    <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#374151;margin-bottom:14px;">
+      <input type="checkbox" id="fAutoAdvance" checked style="width:auto;">
+      Kalau lunas, otomatis majukan jatuh tempo penyewa ke periode berikutnya
+    </label>
     <div style="display:flex;gap:8px;justify-content:flex-end;">
       <button class="btn btn-secondary" onclick="closeModal()">Batal</button>
       <button class="btn btn-primary" onclick="submitAddIncome()">Simpan</button>
@@ -2874,7 +2903,13 @@ function submitAddIncome(){
   const tenantId = document.getElementById("fTenantIncome").value;
   const jumlah = Number(document.getElementById("fJumlahIncome").value);
   if(!tenantId || !jumlah) return;
-  income.push({ id:uid("i"), tenantId, tanggal:document.getElementById("fTglIncome").value, periode:document.getElementById("fPeriodeIncome").value, jumlah, status:document.getElementById("fStatusIncome").value });
+  const status = document.getElementById("fStatusIncome").value;
+  const autoAdvance = document.getElementById("fAutoAdvance").checked;
+  income.push({ id:uid("i"), tenantId, tanggal:document.getElementById("fTglIncome").value, periode:document.getElementById("fPeriodeIncome").value, jumlah, status });
+  if(status==="lunas" && autoAdvance){
+    const t = tenantById(tenantId);
+    if(t) tenants = tenants.map(x => x.id===tenantId ? {...x, jatuhTempo: advanceJatuhTempo(t.jatuhTempo, t.metodeBayar)} : x);
+  }
   closeModal(); render();
 }
 
@@ -2885,17 +2920,11 @@ function openReceipt(incomeId){
   const overlay = document.createElement("div");
   overlay.className = "modal-overlay"; overlay.id = "receiptOverlay";
   overlay.innerHTML = `
-    <style>
-      @media print {
-        body * { visibility:hidden; }
-        .receipt-print, .receipt-print * { visibility:visible; }
-        .receipt-print { position:fixed; top:0; left:0; width:100%; box-shadow:none !important; }
-        .no-print { display:none !important; }
-      }
-    </style>
     <div class="modal-box" style="max-width:420px;padding:0;overflow:hidden;">
-      <div class="receipt-print" style="padding:28px;">
-        <div style="text-align:center;margin-bottom:18px;border-bottom:2px solid #1B2A41;padding-bottom:14px;">
+      <div class="receipt-print" id="receiptContent" style="padding:28px;background:#fff;position:relative;overflow:hidden;">
+        ${i.status==='lunas' ? `
+        <div style="position:absolute;top:70px;right:24px;transform:rotate(-18deg);border:3px solid #C0392B;color:#C0392B;border-radius:10px;padding:6px 16px;font-weight:800;font-size:20px;letter-spacing:2px;opacity:0.8;font-family:'IBM Plex Mono',monospace;pointer-events:none;">LUNAS</div>
+        ` : ""}        <div style="text-align:center;margin-bottom:18px;border-bottom:2px solid #1B2A41;padding-bottom:14px;">
           <img src="${LOGO_FULL}" alt="" style="height:74px;margin:0 auto 8px;display:block;object-fit:contain;">
           <div style="font-weight:700;font-size:15px;color:#1B2A41;">Kwitansi pembayaran</div>
           <div style="font-size:11.5px;color:#9A988F;">${nomorKwitansi}</div>
@@ -2905,7 +2934,7 @@ function openReceipt(incomeId){
           <tr><td style="color:#6B7280;padding:5px 0;">Properti</td><td style="text-align:right;color:#374151;">${esc(p?p.nama:"-")}</td></tr>
           <tr><td style="color:#6B7280;padding:5px 0;">Kamar / unit</td><td style="text-align:right;color:#374151;">${esc(u?u.nomor:"-")}</td></tr>
           <tr><td style="color:#6B7280;padding:5px 0;">Periode</td><td style="text-align:right;color:#374151;">${esc(i.periode)}</td></tr>
-          <tr><td style="color:#6B7280;padding:5px 0;">Tanggal bayar</td><td style="text-align:right;color:#374151;">${i.tanggal}</td></tr>
+          <tr><td style="color:#6B7280;padding:5px 0;">Tanggal bayar</td><td style="text-align:right;color:#374151;">${formatTanggal(i.tanggal)}</td></tr>
           <tr><td style="color:#6B7280;padding:5px 0;">Status</td><td style="text-align:right;">${i.status==='lunas'?'Lunas':'Telat'}</td></tr>
         </table>
         <div style="background:#F7F8FA;border-radius:10px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;">
@@ -2914,12 +2943,54 @@ function openReceipt(incomeId){
         </div>
         <div style="font-size:11px;color:#9A988F;margin-top:14px;text-align:center;">Kwitansi ini dibuat otomatis oleh sistem.</div>
       </div>
-      <div class="no-print" style="display:flex;gap:8px;justify-content:flex-end;padding:16px 28px;border-top:1px solid #EEECE3;">
+      <div id="receiptActionsError" style="display:none;padding:0 28px;font-size:11.5px;color:#A32D2D;"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;padding:16px 28px;border-top:1px solid #EEECE3;">
         <button class="btn btn-secondary" onclick="document.getElementById('receiptOverlay').remove()">Tutup</button>
-        <button class="btn btn-primary" onclick="window.print()">${ICONS.printer} Cetak / simpan PDF</button>
+        <button class="btn btn-secondary" onclick="downloadReceipt('${nomorKwitansi}')">${ICONS.download} Download</button>
+        <button class="btn btn-primary" onclick="shareReceipt('${nomorKwitansi}')">${ICONS.wa} Bagikan</button>
       </div>
     </div>`;
   document.body.appendChild(overlay);
+}
+
+async function renderReceiptCanvas(){
+  const node = document.getElementById("receiptContent");
+  return await html2canvas(node, { backgroundColor: "#ffffff", scale: 2 });
+}
+function showReceiptError(msg){
+  const el = document.getElementById("receiptActionsError");
+  if(el){ el.textContent = msg; el.style.display = "block"; }
+}
+async function downloadReceipt(nomorKwitansi){
+  try{
+    const canvas = await renderReceiptCanvas();
+    const link = document.createElement("a");
+    link.download = `${nomorKwitansi}.png`;
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+  }catch(e){
+    showReceiptError("Gagal membuat gambar kwitansi. Coba lagi atau screenshot manual.");
+  }
+}
+async function shareReceipt(nomorKwitansi){
+  try{
+    const canvas = await renderReceiptCanvas();
+    canvas.toBlob(async (blob) => {
+      const file = new File([blob], `${nomorKwitansi}.png`, { type: "image/png" });
+      if(navigator.canShare && navigator.canShare({ files: [file] })){
+        try{
+          await navigator.share({ files: [file], title: "Kwitansi pembayaran", text: nomorKwitansi });
+        }catch(e){ /* user membatalkan share, abaikan */ }
+      } else if(navigator.share){
+        await navigator.share({ title: "Kwitansi pembayaran", text: nomorKwitansi });
+        showReceiptError("Perangkat ini tidak mendukung bagikan gambar, cuma teks. Pakai tombol Download untuk gambarnya.");
+      } else {
+        showReceiptError("Bagikan tidak didukung di browser ini. Pakai tombol Download saja.");
+      }
+    }, "image/png");
+  }catch(e){
+    showReceiptError("Gagal menyiapkan kwitansi untuk dibagikan.");
+  }
 }
 
 // ================= EXPENSES TAB =================
