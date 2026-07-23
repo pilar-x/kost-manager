@@ -179,6 +179,7 @@ const ICONS = {
   reports: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-4"/></svg>',
   settings: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09c0 .67.4 1.27 1 1.51.62.26 1.34.13 1.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06c-.46.48-.59 1.2-.33 1.82.24.6.84 1 1.51 1H21a2 2 0 010 4h-.09c-.67 0-1.27.4-1.51 1z"/></svg>',
   trash: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z"/></svg>',
+  edit: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5z"/></svg>',
   printer: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2M6 14h12v8H6z"/></svg>',
   wa: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>',
   doc: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>',
@@ -2119,6 +2120,37 @@ let riwayat = [
 ];
 
 
+const STORAGE_KEY = "griya-jaten-indah-data-v1";
+
+function saveState(){
+  try{
+    const payload = { properties, units, tenants, income, expenses, riwayat, dendaPerHari: state.dendaPerHari, kontakPemilik: state.kontakPemilik };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+  }catch(e){
+    console.warn("Gagal menyimpan data ke localStorage:", e);
+  }
+}
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return false;
+    const data = JSON.parse(raw);
+    if(data.properties) properties = data.properties;
+    if(data.units) units = data.units;
+    if(data.tenants) tenants = data.tenants;
+    if(data.income) income = data.income;
+    if(data.expenses) expenses = data.expenses;
+    if(data.riwayat) riwayat = data.riwayat;
+    if(typeof data.dendaPerHari === "number") state.dendaPerHari = data.dendaPerHari;
+    if(typeof data.kontakPemilik === "string") state.kontakPemilik = data.kontakPemilik;
+    return true;
+  }catch(e){
+    console.warn("Gagal memuat data dari localStorage:", e);
+    return false;
+  }
+}
+
 const KATEGORI_META = {
   listrik:{label:"Listrik",color:"#BA7517"}, air:{label:"Air",color:"#185FA5"},
   internet:{label:"Internet",color:"#534AB7"}, maintenance:{label:"Maintenance",color:"#993C1D"},
@@ -2460,8 +2492,13 @@ function renderOwnerShell(){
     <div class="sidebar-footer sidebar-footer-desktop">
       <label>Nomor WA untuk calon penyewa</label>
       <input value="${esc(state.kontakPemilik)}" oninput="state.kontakPemilik=this.value">
+      <div style="display:flex;gap:6px;margin-top:8px;">
+        <button onclick="exportAllData()" title="Export backup" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;background:transparent;border:1px solid #2F5C3C;color:#C9E4C5;border-radius:7px;padding:6px 0;font-size:11px;cursor:pointer;font-family:inherit;">${ICONS.download} Export</button>
+        <button onclick="document.getElementById('importFileInputDesktop').click()" title="Import backup" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;background:transparent;border:1px solid #2F5C3C;color:#C9E4C5;border-radius:7px;padding:6px 0;font-size:11px;cursor:pointer;font-family:inherit;">${ICONS.upload} Import</button>
+        <input type="file" id="importFileInputDesktop" accept=".json" style="display:none;" onchange="importAllData(event)">
+      </div>
       <button class="sidebar-switch-btn" onclick="state.role='public'; render();">${ICONS.logout} Lihat tampilan calon penyewa</button>
-      <div class="sidebar-note">Mode pemilik · data sementara di sesi ini</div>
+      <div class="sidebar-note">Mode pemilik · data tersimpan otomatis di perangkat ini</div>
     </div>`;
 
   function navBtn(key,label,icon,count){
@@ -2527,7 +2564,16 @@ function openMobileSettings(){
       <input id="mobileWaInput" value="${esc(state.kontakPemilik)}">
     </div>
     <button class="btn btn-secondary" style="width:100%;display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:10px;" onclick="saveMobileWaAndSwitch()">${ICONS.logout} Lihat tampilan calon penyewa</button>
-    <p style="font-size:11.5px;color:#9A988F;text-align:center;margin:0;">Mode pemilik · data sementara di sesi ini</p>
+    <div style="border-top:1px solid #EEECE3;margin:14px 0;padding-top:14px;">
+      <div style="font-size:12px;font-weight:600;color:#6B7280;margin-bottom:8px;">Cadangkan data</div>
+      <div style="display:flex;gap:8px;margin-bottom:6px;">
+        <button class="btn btn-secondary" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;font-size:12.5px;" onclick="exportAllData()">${ICONS.download} Export</button>
+        <button class="btn btn-secondary" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;font-size:12.5px;" onclick="document.getElementById('importFileInput').click()">${ICONS.upload} Import</button>
+        <input type="file" id="importFileInput" accept=".json" style="display:none;" onchange="importAllData(event)">
+      </div>
+      <p style="font-size:10.5px;color:#9A988F;margin:0;">Export = simpan semua data ke file. Import = pulihkan dari file backup (menimpa data saat ini).</p>
+    </div>
+    <p style="font-size:11.5px;color:#9A988F;text-align:center;margin:14px 0 0;">Mode pemilik · data tersimpan otomatis di perangkat ini</p>
   `);
 }
 function saveMobileWaAndSwitch(){
@@ -2535,6 +2581,41 @@ function saveMobileWaAndSwitch(){
   state.role = "public";
   closeModal();
   render();
+}
+function exportAllData(){
+  const payload = { properties, units, tenants, income, expenses, riwayat, dendaPerHari: state.dendaPerHari, kontakPemilik: state.kontakPemilik, exportedAt: new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  const tanggal = new Date().toISOString().slice(0,10);
+  link.href = url;
+  link.download = `backup-griya-jaten-indah-${tanggal}.json`;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+function importAllData(evt){
+  const file = evt.target.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try{
+      const data = JSON.parse(reader.result);
+      if(!data.properties || !data.units || !data.tenants){
+        alert("File tidak valid — bukan file backup Griya Jaten Indah.");
+        return;
+      }
+      if(!confirm("Import akan MENIMPA semua data yang ada sekarang dengan isi file backup ini. Lanjutkan?")) return;
+      properties = data.properties||[]; units = data.units||[]; tenants = data.tenants||[];
+      income = data.income||[]; expenses = data.expenses||[]; riwayat = data.riwayat||[];
+      if(typeof data.dendaPerHari==="number") state.dendaPerHari = data.dendaPerHari;
+      if(typeof data.kontakPemilik==="string") state.kontakPemilik = data.kontakPemilik;
+      closeModal();
+      render();
+      alert("Data berhasil dipulihkan dari backup.");
+    }catch(e){
+      alert("Gagal membaca file. Pastikan file backup yang benar.");
+    }
+  };
+  reader.readAsText(file);
 }
 
 // ================= DASHBOARD =================
@@ -2747,6 +2828,7 @@ function renderUnitsTab(){
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;">
         <h4 style="margin:0;font-size:15px;font-weight:600;color:#1B2A41;">${esc(p.nama)}</h4>
         ${badge(TIPE_LABEL[p.tipe],"#633806","#FAEEDA")}
+        <button onclick="openAddPropertyForm('${p.id}')" title="Edit properti" style="border:none;background:transparent;cursor:pointer;padding:2px;color:#6B7280;display:flex;">${ICONS.edit}</button>
         <span style="font-size:12px;color:#9A988F;">${esc(p.alamat)}</span>
       </div>
       ${fasilitasUmumHtml}      <div class="flex-wrap-gap">${cards || `<span style="font-size:13px;color:#9A988F;">Belum ada kamar / unit di properti ini.</span>`}</div>
@@ -2788,23 +2870,49 @@ function toggleHistory(unitId){
   render();
 }
 
-function openAddPropertyForm(){
-  const options = `<option value="kost_multi">Kost multi kamar</option><option value="kost_1_pintu">Kost 1 pintu</option><option value="rumah_sewa">Rumah sewa (3-4 orang)</option>`;
-  showModal("Tambah properti", `
-    <div class="field"><label class="field-label">Nama properti</label><input id="fNamaProp" placeholder="Kost Melati"></div>
+function openAddPropertyForm(editId){
+  const p = editId ? propertyById(editId) : null;
+  const options = ["kost_multi","kost_1_pintu","rumah_sewa"].map(v=>
+    `<option value="${v}" ${p&&p.tipe===v?"selected":""}>${TIPE_LABEL[v]}</option>`).join("");
+  const fasilitasUmumStr = p && p.fasilitasUmum ? p.fasilitasUmum.join(", ") : "";
+  showModal(p?`Edit properti — ${esc(p.nama)}`:"Tambah properti", `
+    <div class="field"><label class="field-label">Nama properti</label><input id="fNamaProp" placeholder="Kost Melati" value="${p?esc(p.nama):""}"></div>
     <div class="field"><label class="field-label">Tipe properti</label><select id="fTipeProp">${options}</select></div>
-    <div class="field"><label class="field-label">Alamat</label><input id="fAlamatProp" placeholder="Jl. Contoh No. 1"></div>
-    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:18px;">
-      <button class="btn btn-secondary" onclick="closeModal()">Batal</button>
-      <button class="btn btn-primary" onclick="submitAddProperty()">Simpan</button>
+    <div class="field"><label class="field-label">Alamat</label><input id="fAlamatProp" placeholder="Jl. Contoh No. 1" value="${p?esc(p.alamat):""}"></div>
+    <div class="field"><label class="field-label">Fasilitas gratis (pisahkan koma)</label><input id="fFasilitasUmumProp" placeholder="WiFi, Listrik, Parkir" value="${esc(fasilitasUmumStr)}"></div>
+    <div style="display:flex;gap:8px;justify-content:${p?'space-between':'flex-end'};margin-top:18px;">
+      ${p?`<button type="button" onclick="closeModal(); confirmDeleteProperty('${p.id}');" style="border:none;background:transparent;color:#A32D2D;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;">${ICONS.trash} Hapus properti</button>`:'<span></span>'}
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-secondary" onclick="closeModal()">Batal</button>
+        <button class="btn btn-primary" onclick="submitAddProperty('${editId||""}')">Simpan</button>
+      </div>
     </div>
   `);
 }
-function submitAddProperty(){
+function submitAddProperty(editId){
   const nama = document.getElementById("fNamaProp").value;
   if(!nama) return;
-  properties.push({ id:uid("p"), nama, tipe:document.getElementById("fTipeProp").value, alamat:document.getElementById("fAlamatProp").value });
+  const tipe = document.getElementById("fTipeProp").value;
+  const alamat = document.getElementById("fAlamatProp").value;
+  const fasilitasUmum = document.getElementById("fFasilitasUmumProp").value.split(",").map(s=>s.trim()).filter(Boolean);
+  if(editId){
+    properties = properties.map(p=>p.id===editId?{...p,nama,tipe,alamat,fasilitasUmum}:p);
+  }else{
+    properties.push({ id:uid("p"), nama, tipe, alamat, fasilitasUmum });
+  }
   closeModal(); render();
+}
+function confirmDeleteProperty(propId){
+  const p = propertyById(propId);
+  const relatedUnits = units.filter(u=>u.propertiId===propId);
+  if(relatedUnits.length>0){
+    alert(`Tidak bisa menghapus "${p.nama}" karena masih ada ${relatedUnits.length} kamar terdaftar di properti ini. Hapus dulu kamar-kamarnya.`);
+    return;
+  }
+  if(confirm(`Yakin hapus properti "${p.nama}"?`)){
+    properties = properties.filter(x=>x.id!==propId);
+    render();
+  }
 }
 
 function openAddUnitForm(){
@@ -2914,6 +3022,7 @@ function openTenantDetail(tenantId){
       <button onclick="closeModal(); openAddIncomeForm('${t.id}');" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:#B9902E;color:#17331F;border:none;border-radius:9px;padding:10px 0;font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit;">${ICONS.plus} Catat Pembayaran</button>
     </div>
     <div style="display:flex;gap:16px;justify-content:center;">
+      <button onclick="closeModal(); openAddTenantForm('${t.id}');" style="border:none;background:transparent;color:#0C447C;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;">${ICONS.edit} Edit data</button>
       <button onclick="closeModal(); openDocModal('${t.id}');" style="border:none;background:transparent;color:#534AB7;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;">${ICONS.doc} Lihat dokumen</button>
       <button onclick="closeModal(); removeTenant('${t.id}');" style="border:none;background:transparent;color:#A32D2D;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;">${ICONS.trash} Hapus penyewa</button>
     </div>
@@ -2946,48 +3055,55 @@ function removeTenant(id){
   render();
 }
 
-function openAddTenantForm(){
-  const freeUnits = units.filter(u=>u.status!=="terisi");
-  const unitOptions = freeUnits.map(u=>`<option value="${u.id}">${esc(propertyById(u.propertiId)?.nama)} · ${esc(u.nomor)}</option>`).join("") || `<option value="">Tidak ada unit kosong</option>`;
-  showModal("Tambah penyewa", `
-    <div class="field"><label class="field-label">Nama penyewa</label><input id="fNamaTenant"></div>
-    <div class="field"><label class="field-label">Kontak (untuk WhatsApp)</label><input id="fKontakTenant" placeholder="08xx"></div>
+function openAddTenantForm(editId){
+  const t = editId ? tenantById(editId) : null;
+  const freeUnits = units.filter(u=>u.status!=="terisi" || (t && u.id===t.unitId));
+  const unitOptions = freeUnits.map(u=>`<option value="${u.id}" ${t&&t.unitId===u.id?"selected":""}>${esc(propertyById(u.propertiId)?.nama)} · ${esc(u.nomor)}</option>`).join("") || `<option value="">Tidak ada unit kosong</option>`;
+  tempTenantFiles = { ktp: t?t.ktpDataUrl:null, foto: t?t.fotoDataUrl:null };
+  const ktpPreview = t&&t.ktpDataUrl ? `<img src="${t.ktpDataUrl}" style="width:100%;max-height:70px;object-fit:cover;border-radius:6px;">` : ICONS.upload;
+  const fotoPreview = t&&t.fotoDataUrl ? `<img src="${t.fotoDataUrl}" style="width:100%;max-height:70px;object-fit:cover;border-radius:6px;">` : ICONS.upload;
+  showModal(t?`Edit penyewa — ${esc(t.nama)}`:"Tambah penyewa", `
+    <div class="field"><label class="field-label">Nama penyewa</label><input id="fNamaTenant" value="${t?esc(t.nama):""}"></div>
+    <div class="field"><label class="field-label">Kontak (untuk WhatsApp)</label><input id="fKontakTenant" placeholder="08xx" value="${t?esc(t.kontak||""):""}"></div>
     <div class="field"><label class="field-label">Unit / kamar</label><select id="fUnitTenant">${unitOptions}</select></div>
     <div class="field"><label class="field-label">Metode pembayaran</label>
-      <select id="fMetodeTenant"><option value="bulanan">Bulanan</option><option value="tahunan">Langsung setahun</option></select>
+      <select id="fMetodeTenant">
+        <option value="bulanan" ${t&&t.metodeBayar==='bulanan'?'selected':''}>Bulanan</option>
+        <option value="tahunan" ${t&&t.metodeBayar==='tahunan'?'selected':''}>Langsung setahun</option>
+      </select>
     </div>
     <div style="display:flex;gap:10px;">
-      <div class="field" style="flex:1;"><label class="field-label">Tanggal masuk</label><input type="date" id="fMasukTenant"></div>
-      <div class="field" style="flex:1;"><label class="field-label">Jatuh tempo berikutnya</label><input type="date" id="fJatuhTempoTenant"></div>
+      <div class="field" style="flex:1;"><label class="field-label">Tanggal masuk</label><input type="date" id="fMasukTenant" value="${t?t.tglMasuk||"":""}"></div>
+      <div class="field" style="flex:1;"><label class="field-label">Jatuh tempo berikutnya</label><input type="date" id="fJatuhTempoTenant" value="${t?t.jatuhTempo||"":""}"></div>
     </div>
     <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#374151;margin-bottom:12px;">
-      <input type="checkbox" id="fSharedTenant" style="width:auto;" onchange="document.getElementById('sharedFields').style.display=this.checked?'flex':'none'">
+      <input type="checkbox" id="fSharedTenant" style="width:auto;" ${t&&t.rumahShareTotal?"checked":""} onchange="document.getElementById('sharedFields').style.display=this.checked?'flex':'none'">
       Ini rumah sewa patungan (biaya dibagi rata antar penghuni)
     </label>
-    <div id="sharedFields" style="display:none;gap:10px;">
-      <div class="field" style="flex:1;"><label class="field-label">Total sewa rumah/bulan (Rp)</label><input type="number" id="fShareTotalTenant"></div>
-      <div class="field" style="flex:1;"><label class="field-label">Jumlah penghuni</label><input type="number" id="fShareJmlTenant" value="4"></div>
+    <div id="sharedFields" style="display:${t&&t.rumahShareTotal?'flex':'none'};gap:10px;">
+      <div class="field" style="flex:1;"><label class="field-label">Total sewa rumah/bulan (Rp)</label><input type="number" id="fShareTotalTenant" value="${t&&t.rumahShareTotal?t.rumahShareTotal:""}"></div>
+      <div class="field" style="flex:1;"><label class="field-label">Jumlah penghuni</label><input type="number" id="fShareJmlTenant" value="${t&&t.rumahJmlOrang?t.rumahJmlOrang:4}"></div>
     </div>
     <div style="display:flex;gap:10px;margin-bottom:4px;">
       <div style="flex:1;">
         <label class="field-label">Scan / foto KTP</label>
         <label style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border:1.5px dashed #DDD9CC;border-radius:10px;padding:14px 8px;cursor:pointer;">
-          <span id="ktpPreviewWrap">${ICONS.upload}</span><span style="font-size:11px;color:#9A988F;">Unggah KTP</span>
+          <span id="ktpPreviewWrap">${ktpPreview}</span><span style="font-size:11px;color:#9A988F;">Unggah KTP</span>
           <input type="file" accept="image/*" style="display:none;" onchange="handleTenantFile(event,'ktp')">
         </label>
       </div>
       <div style="flex:1;">
         <label class="field-label">Foto penyewa</label>
         <label style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border:1.5px dashed #DDD9CC;border-radius:10px;padding:14px 8px;cursor:pointer;">
-          <span id="fotoPreviewWrap">${ICONS.upload}</span><span style="font-size:11px;color:#9A988F;">Unggah foto</span>
+          <span id="fotoPreviewWrap">${fotoPreview}</span><span style="font-size:11px;color:#9A988F;">Unggah foto</span>
           <input type="file" accept="image/*" style="display:none;" onchange="handleTenantFile(event,'foto')">
         </label>
       </div>
     </div>
-    <p style="font-size:11px;color:#9A988F;margin:0 0 14px;">File tersimpan sementara di sesi ini saja (belum ada penyimpanan permanen).</p>
+    <p style="font-size:11px;color:#9A988F;margin:0 0 14px;">File tersimpan di data lokal browser ini saja.</p>
     <div style="display:flex;gap:8px;justify-content:flex-end;">
       <button class="btn btn-secondary" onclick="closeModal()">Batal</button>
-      <button class="btn btn-primary" onclick="submitAddTenant()">Simpan</button>
+      <button class="btn btn-primary" onclick="submitAddTenant('${editId||""}')">Simpan</button>
     </div>
   `);
 }
@@ -3002,25 +3118,47 @@ function handleTenantFile(evt, kind){
   };
   reader.readAsDataURL(file);
 }
-function submitAddTenant(){
+function submitAddTenant(editId){
   const nama = document.getElementById("fNamaTenant").value;
   const unitId = document.getElementById("fUnitTenant").value;
   if(!nama || !unitId) return;
   const isShared = document.getElementById("fSharedTenant").checked;
   const tglMasuk = document.getElementById("fMasukTenant").value || new Date().toISOString().slice(0,10);
-  const newTenant = {
-    id:uid("t"), nama, kontak:document.getElementById("fKontakTenant").value,
-    unitId, metodeBayar:document.getElementById("fMetodeTenant").value,
-    tglMasuk, jatuhTempo:document.getElementById("fJatuhTempoTenant").value,
-    ktpDataUrl:tempTenantFiles.ktp, fotoDataUrl:tempTenantFiles.foto,
-  };
-  if(isShared){
-    newTenant.rumahShareTotal = Number(document.getElementById("fShareTotalTenant").value)||0;
-    newTenant.rumahJmlOrang = Number(document.getElementById("fShareJmlTenant").value)||1;
+  const kontak = document.getElementById("fKontakTenant").value;
+  const metodeBayar = document.getElementById("fMetodeTenant").value;
+  const jatuhTempo = document.getElementById("fJatuhTempoTenant").value;
+
+  if(editId){
+    const old = tenantById(editId);
+    const updated = { ...old, nama, kontak, unitId, metodeBayar, tglMasuk, jatuhTempo, ktpDataUrl:tempTenantFiles.ktp, fotoDataUrl:tempTenantFiles.foto };
+    if(isShared){
+      updated.rumahShareTotal = Number(document.getElementById("fShareTotalTenant").value)||0;
+      updated.rumahJmlOrang = Number(document.getElementById("fShareJmlTenant").value)||1;
+    }else{
+      delete updated.rumahShareTotal; delete updated.rumahJmlOrang;
+    }
+    tenants = tenants.map(x=>x.id===editId?updated:x);
+    // kalau unit berubah, update status unit lama jadi kosong, unit baru jadi terisi
+    if(old.unitId !== unitId){
+      units = units.map(u=>{
+        if(u.id===old.unitId) return {...u,status:"kosong"};
+        if(u.id===unitId) return {...u,status:"terisi"};
+        return u;
+      });
+    }
+  }else{
+    const newTenant = {
+      id:uid("t"), nama, kontak, unitId, metodeBayar, tglMasuk, jatuhTempo,
+      ktpDataUrl:tempTenantFiles.ktp, fotoDataUrl:tempTenantFiles.foto,
+    };
+    if(isShared){
+      newTenant.rumahShareTotal = Number(document.getElementById("fShareTotalTenant").value)||0;
+      newTenant.rumahJmlOrang = Number(document.getElementById("fShareJmlTenant").value)||1;
+    }
+    tenants.push(newTenant);
+    units = units.map(u=>u.id===unitId?{...u,status:"terisi"}:u);
+    riwayat.push({ id:uid("r"), unitId, nama, tglMasuk, tglKeluar:null });
   }
-  tenants.push(newTenant);
-  units = units.map(u=>u.id===unitId?{...u,status:"terisi"}:u);
-  riwayat.push({ id:uid("r"), unitId, nama, tglMasuk, tglKeluar:null });
   tempTenantFiles = {ktp:null, foto:null};
   closeModal(); render();
 }
@@ -3315,6 +3453,38 @@ function submitAddExpense(){
 }
 
 // ================= REPORTS TAB =================
+function buildTrendChartSvg(trendData){
+  if(trendData.length===0) return `<p style="font-size:13px;color:#9A988F;margin:0;">Belum ada data untuk grafik.</p>`;
+  const maxVal = Math.max(...trendData.map(d=>Math.max(d.income,d.expense)), 1);
+  const barW = 16, gap = 5, groupGap = 22;
+  const chartH = 150;
+  const groupW = barW*2 + gap;
+  const totalW = Math.max(trendData.length * (groupW + groupGap), 280);
+  const bars = trendData.map((d,i)=>{
+    const x = i*(groupW+groupGap) + 8;
+    const incH = d.income>0 ? Math.max(3, (d.income/maxVal)*chartH) : 0;
+    const expH = d.expense>0 ? Math.max(3, (d.expense/maxVal)*chartH) : 0;
+    const label = ymLabel(d.ym).split(" ")[0].slice(0,3);
+    return `
+      <g>
+        <rect x="${x}" y="${chartH-incH}" width="${barW}" height="${incH}" fill="#639922" rx="2"/>
+        <rect x="${x+barW+gap}" y="${chartH-expH}" width="${barW}" height="${expH}" fill="#C0392B" rx="2"/>
+        <text x="${x+barW+gap/2}" y="${chartH+16}" font-size="9.5" fill="#6B7280" text-anchor="middle">${label}</text>
+      </g>`;
+  }).join("");
+  return `
+    <div style="overflow-x:auto;">
+      <svg width="${totalW}" height="${chartH+30}" viewBox="0 0 ${totalW} ${chartH+30}" style="display:block;">
+        <line x1="0" y1="${chartH}" x2="${totalW}" y2="${chartH}" stroke="#E4E2D8" stroke-width="1"/>
+        ${bars}
+      </svg>
+    </div>
+    <div style="display:flex;gap:16px;margin-top:8px;font-size:11.5px;color:#6B7280;">
+      <span><span style="display:inline-block;width:10px;height:10px;background:#639922;border-radius:2px;margin-right:4px;vertical-align:-1px;"></span>Pemasukan</span>
+      <span><span style="display:inline-block;width:10px;height:10px;background:#C0392B;border-radius:2px;margin-right:4px;vertical-align:-1px;"></span>Pengeluaran</span>
+    </div>`;
+}
+
 function renderReportsTab(){
   const monthlyMap = {};
   income.forEach(i=>{
@@ -3329,6 +3499,15 @@ function renderReportsTab(){
     monthlyMap[key].expense += e.jumlah;
   });
   const monthlyByProperty = Object.values(monthlyMap).sort((a,b)=> a.ym<b.ym?1:-1);
+
+  const monthlyTotals = {};
+  Object.values(monthlyMap).forEach(r=>{
+    if(!monthlyTotals[r.ym]) monthlyTotals[r.ym] = {ym:r.ym, income:0, expense:0};
+    monthlyTotals[r.ym].income += r.income;
+    monthlyTotals[r.ym].expense += r.expense;
+  });
+  const trendData = Object.values(monthlyTotals).sort((a,b)=>a.ym<b.ym?-1:1).slice(-12);
+  const trendChartHtml = buildTrendChartSvg(trendData);
 
   const dates = income.map(i=>i.tanggal).concat(expenses.map(e=>e.tanggal));
   const currentYm = dates.length ? dates.slice().sort().reverse()[0].slice(0,7) : ymKey(new Date().toISOString());
@@ -3387,6 +3566,11 @@ function renderReportsTab(){
         <div style="margin-top:10px;">${isSafe? badge("Aman, sudah di atas titik impas","#27500A","#EAF3DE") : badge(`Butuh ${breakEvenUnits-occupiedNow} unit lagi supaya impas`,"#791F1F","#FCEBEB")}</div>
       </div>
     </div>
+    <div class="card" style="padding:18px;margin-bottom:20px;">
+      <h4 style="margin:0 0 4px;font-size:14px;font-weight:600;color:#1B2A41;display:flex;align-items:center;gap:6px;">${ICONS.reports} Tren bulanan (12 bulan terakhir)</h4>
+      <p style="margin:0 0 14px;font-size:12px;color:#9A988F;">Perbandingan pemasukan vs pengeluaran seluruh properti tiap bulan.</p>
+      ${trendChartHtml}
+    </div>
     <div class="card" style="overflow:hidden;">
       <div class="table-scroll"><table><thead><tr><th>Properti</th><th>Bulan</th><th>Pemasukan</th><th>Pengeluaran</th><th>Selisih</th></tr></thead><tbody>${tableRows}</tbody></table></div>
     </div>
@@ -3432,7 +3616,9 @@ function exportExcel(){
 function render(){
   const app = document.getElementById("app");
   app.innerHTML = state.role==="public" ? renderPublicView() : renderOwnerShell();
+  saveState();
 }
+loadState();
 render();
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
