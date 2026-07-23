@@ -2169,6 +2169,8 @@ let state = {
   unitFilterStatus: "all",
   unitFilterProp: "all",
   incomeSearch: "",
+  tenantSearch: "",
+  unitSearch: "",
   incomeFilterStatus: "all",
   incomeFilterBulan: "all",
   docModalTenant: null,
@@ -2491,7 +2493,7 @@ function renderOwnerShell(){
     </div>
     <div class="sidebar-footer sidebar-footer-desktop">
       <label>Nomor WA untuk calon penyewa</label>
-      <input value="${esc(state.kontakPemilik)}" oninput="state.kontakPemilik=this.value">
+      <input value="${esc(state.kontakPemilik)}" oninput="state.kontakPemilik=this.value; saveState();">
       <div style="display:flex;gap:6px;margin-top:8px;">
         <button onclick="exportAllData()" title="Export backup" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;background:transparent;border:1px solid #2F5C3C;color:#C9E4C5;border-radius:7px;padding:6px 0;font-size:11px;cursor:pointer;font-family:inherit;">${ICONS.download} Export</button>
         <button onclick="document.getElementById('importFileInputDesktop').click()" title="Import backup" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;background:transparent;border:1px solid #2F5C3C;color:#C9E4C5;border-radius:7px;padding:6px 0;font-size:11px;cursor:pointer;font-family:inherit;">${ICONS.upload} Import</button>
@@ -2619,6 +2621,51 @@ function importAllData(evt){
 }
 
 // ================= DASHBOARD =================
+function computeOccupancyHistory(monthsBack){
+  const today = new Date();
+  const totalUnits = units.length || 1;
+  const result = [];
+  for(let i=monthsBack-1;i>=0;i--){
+    const d = new Date(today.getFullYear(), today.getMonth()-i, 1);
+    const startOfMonth = new Date(d.getFullYear(), d.getMonth(), 1);
+    const endOfMonth = new Date(d.getFullYear(), d.getMonth()+1, 0);
+    const ym = d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
+    const occupiedUnitIds = new Set();
+    riwayat.forEach(r=>{
+      const masuk = new Date(r.tglMasuk);
+      const keluar = r.tglKeluar ? new Date(r.tglKeluar) : null;
+      if(masuk <= endOfMonth && (!keluar || keluar >= startOfMonth)){
+        occupiedUnitIds.add(r.unitId);
+      }
+    });
+    result.push({ ym, pct: Math.round(occupiedUnitIds.size/totalUnits*100) });
+  }
+  return result;
+}
+function buildOccupancyTrendSvg(data){
+  if(data.length===0) return `<p style="font-size:13px;color:#9A988F;margin:0;">Belum ada data riwayat.</p>`;
+  const chartH = 90, chartPad = 10, leftPad = 24;
+  const stepX = data.length>1 ? 260/(data.length-1) : 0;
+  const totalW = Math.max((data.length>1 ? stepX*(data.length-1) : 0) + leftPad + 20, 280);
+  const pts = data.map((d,i)=>({ x: leftPad + i*stepX, y: chartPad + (100-d.pct)/100*chartH, pct: d.pct, ym: d.ym }));
+  const polyline = pts.map(p=>`${p.x},${p.y}`).join(" ");
+  const dots = pts.map(p=>`<circle cx="${p.x}" cy="${p.y}" r="3" fill="#B9902E"><title>${ymLabel(p.ym)}: ${p.pct}%</title></circle>`).join("");
+  const labelEvery = Math.max(1, Math.ceil(pts.length/6));
+  const labels = pts.map((p,i)=> i%labelEvery===0 ? `<text x="${p.x}" y="${chartH+chartPad+14}" font-size="9" fill="#6B7280" text-anchor="middle">${ymLabel(p.ym).split(" ")[0].slice(0,3)}</text>` : "").join("");
+  return `
+  <div style="overflow-x:auto;">
+    <svg width="${totalW}" height="${chartH+chartPad*2+16}" viewBox="0 0 ${totalW} ${chartH+chartPad*2+16}">
+      <line x1="${leftPad}" y1="${chartPad}" x2="${totalW-10}" y2="${chartPad}" stroke="#F1EFE8"/>
+      <line x1="${leftPad}" y1="${chartPad+chartH/2}" x2="${totalW-10}" y2="${chartPad+chartH/2}" stroke="#F1EFE8"/>
+      <text x="2" y="${chartPad+4}" font-size="8" fill="#9A988F">100%</text>
+      <text x="2" y="${chartPad+chartH/2+4}" font-size="8" fill="#9A988F">50%</text>
+      <polyline points="${polyline}" fill="none" stroke="#173F27" stroke-width="2"/>
+      ${dots}
+      ${labels}
+    </svg>
+  </div>`;
+}
+
 function renderDashboard(){
   const totalIncome = income.reduce((s,i)=>s+i.jumlah,0);
   const totalExpense = expenses.reduce((s,e)=>s+e.jumlah,0);
@@ -2727,7 +2774,7 @@ function renderDashboard(){
     </div>
     ${telatCount>0?`<div style="display:flex;align-items:center;gap:8px;background:#FCEBEB;color:#791F1F;padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:14px;">${ICONS.alert} Ada ${telatCount} pembayaran berstatus telat. Cek tab Pemasukan.</div>`:""}
     ${remindersHtml}
-    <div class="flex-wrap-gap" style="gap:20px;">
+    <div class="flex-wrap-gap" style="gap:20px;margin-bottom:20px;">
       <div class="card" style="padding:18px;flex:1 1 320px;">
         <h4 style="margin:0 0 12px;font-size:14px;font-weight:600;color:#1B2A41;">Pengeluaran per kategori</h4>
         ${expenseCatHtml}
@@ -2737,53 +2784,26 @@ function renderDashboard(){
         ${occupancyMapHtml}
       </div>
     </div>
+    <div class="card" style="padding:18px;">
+      <h4 style="margin:0 0 4px;font-size:14px;font-weight:600;color:#1B2A41;">Tren okupansi (12 bulan terakhir)</h4>
+      <p style="margin:0 0 12px;font-size:12px;color:#9A988F;">Dihitung dari riwayat keluar-masuk penyewa seluruh properti.</p>
+      ${buildOccupancyTrendSvg(computeOccupancyHistory(12))}
+    </div>
   `;
 }
 
 // ================= UNITS TAB =================
-function renderUnitsTab(){
+function buildUnitGroupsHtml(){
   const filterStatus = state.unitFilterStatus || "all";
   const filterProp = state.unitFilterProp || "all";
-
-  const propOptionsHtml = `<option value="all">Semua properti</option>` +
-    properties.map(p=>`<option value="${p.id}" ${filterProp===p.id?"selected":""}>${esc(p.nama)}</option>`).join("");
-
+  const search = (state.unitSearch||"").toLowerCase();
   const visibleProperties = properties.filter(p => filterProp==="all" || p.id===filterProp);
-
-  const statUnits = units.filter(u => visibleProperties.some(p=>p.id===u.propertiId));
-  const statTerisi = statUnits.filter(u=>u.status==='terisi').length;
-  const statKosong = statUnits.filter(u=>u.status==='kosong').length;
-  const statPenghuni = tenants.filter(t => { const u=unitById(t.unitId); return u && visibleProperties.some(p=>p.id===u.propertiId); }).length;
-  const statOkupansi = statUnits.length ? Math.round(statTerisi/statUnits.length*100) : 0;
-
-  const statsHtml = `
-    <div class="flex-wrap-gap" style="margin-bottom:16px;">
-      <div class="stat-card">
-        <div style="font-size:12px;color:#6B7280;margin-bottom:4px;">Total kamar</div>
-        <div class="mono" style="font-size:20px;font-weight:700;color:#1B2A41;">${statUnits.length}</div>
-      </div>
-      <div class="stat-card">
-        <div style="font-size:12px;color:#6B7280;margin-bottom:4px;">Terisi</div>
-        <div class="mono" style="font-size:20px;font-weight:700;color:#27500A;">${statTerisi}</div>
-      </div>
-      <div class="stat-card">
-        <div style="font-size:12px;color:#6B7280;margin-bottom:4px;">Kosong</div>
-        <div class="mono" style="font-size:20px;font-weight:700;color:#8A6A1D;">${statKosong}</div>
-      </div>
-      <div class="stat-card">
-        <div style="font-size:12px;color:#6B7280;margin-bottom:4px;">Jumlah penghuni</div>
-        <div class="mono" style="font-size:20px;font-weight:700;color:#1B2A41;">${statPenghuni}</div>
-      </div>
-      <div class="stat-card">
-        <div style="font-size:12px;color:#6B7280;margin-bottom:4px;">Okupansi</div>
-        <div class="mono" style="font-size:20px;font-weight:700;color:#1B2A41;">${statOkupansi}%</div>
-      </div>
-    </div>`;
 
   const groups = visibleProperties.map(p=>{
     let propUnits = units.filter(u=>u.propertiId===p.id);
     if(filterStatus!=="all") propUnits = propUnits.filter(u=>u.status===filterStatus);
-    if(propUnits.length===0 && filterStatus!=="all") return "";
+    if(search) propUnits = propUnits.filter(u=>u.nomor.toLowerCase().includes(search) || u.tipeKamar.toLowerCase().includes(search) || p.nama.toLowerCase().includes(search));
+    if(propUnits.length===0) return "";
     const cards = propUnits.map(u=>{
       const isOpen = state.openHistoryFor===u.id;
       const hist = riwayat.filter(r=>r.unitId===u.id).sort((a,b)=>new Date(b.tglMasuk)-new Date(a.tglMasuk));
@@ -2835,6 +2855,53 @@ function renderUnitsTab(){
     </div>`;
   }).join("");
 
+  return groups || `<p style="font-size:13px;color:#9A988F;">Tidak ada kamar yang cocok.</p>`;
+}
+function updateUnitSearch(val){
+  state.unitSearch = val;
+  const area = document.getElementById("unitListArea");
+  if(area) area.innerHTML = buildUnitGroupsHtml();
+}
+
+function renderUnitsTab(){
+  const filterStatus = state.unitFilterStatus || "all";
+  const filterProp = state.unitFilterProp || "all";
+
+  const propOptionsHtml = `<option value="all">Semua properti</option>` +
+    properties.map(p=>`<option value="${p.id}" ${filterProp===p.id?"selected":""}>${esc(p.nama)}</option>`).join("");
+
+  const visibleProperties = properties.filter(p => filterProp==="all" || p.id===filterProp);
+
+  const statUnits = units.filter(u => visibleProperties.some(p=>p.id===u.propertiId));
+  const statTerisi = statUnits.filter(u=>u.status==='terisi').length;
+  const statKosong = statUnits.filter(u=>u.status==='kosong').length;
+  const statPenghuni = tenants.filter(t => { const u=unitById(t.unitId); return u && visibleProperties.some(p=>p.id===u.propertiId); }).length;
+  const statOkupansi = statUnits.length ? Math.round(statTerisi/statUnits.length*100) : 0;
+
+  const statsHtml = `
+    <div class="flex-wrap-gap" style="margin-bottom:16px;">
+      <div class="stat-card">
+        <div style="font-size:12px;color:#6B7280;margin-bottom:4px;">Total kamar</div>
+        <div class="mono" style="font-size:20px;font-weight:700;color:#1B2A41;">${statUnits.length}</div>
+      </div>
+      <div class="stat-card">
+        <div style="font-size:12px;color:#6B7280;margin-bottom:4px;">Terisi</div>
+        <div class="mono" style="font-size:20px;font-weight:700;color:#27500A;">${statTerisi}</div>
+      </div>
+      <div class="stat-card">
+        <div style="font-size:12px;color:#6B7280;margin-bottom:4px;">Kosong</div>
+        <div class="mono" style="font-size:20px;font-weight:700;color:#8A6A1D;">${statKosong}</div>
+      </div>
+      <div class="stat-card">
+        <div style="font-size:12px;color:#6B7280;margin-bottom:4px;">Jumlah penghuni</div>
+        <div class="mono" style="font-size:20px;font-weight:700;color:#1B2A41;">${statPenghuni}</div>
+      </div>
+      <div class="stat-card">
+        <div style="font-size:12px;color:#6B7280;margin-bottom:4px;">Okupansi</div>
+        <div class="mono" style="font-size:20px;font-weight:700;color:#1B2A41;">${statOkupansi}%</div>
+      </div>
+    </div>`;
+
   return `
     <div class="tab-header">
       <h2>Properti & kamar</h2>
@@ -2845,6 +2912,7 @@ function renderUnitsTab(){
     </div>
     <p style="margin:0 0 14px;font-size:13px;color:#6B7280;">Kelola varian harga dan fasilitas tiap kamar, termasuk kost multi kamar, kost 1 pintu, dan rumah sewa utuh.</p>
     ${statsHtml}
+    <input type="text" placeholder="Cari nomor kamar, tipe, atau nama properti..." value="${esc(state.unitSearch||"")}" oninput="updateUnitSearch(this.value)" style="margin-bottom:10px;">
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;">
       <select onchange="state.unitFilterStatus=this.value; render();" style="flex:1;min-width:130px;">
         <option value="all" ${filterStatus==="all"?"selected":""}>Semua status</option>
@@ -2853,7 +2921,7 @@ function renderUnitsTab(){
       </select>
       <select onchange="state.unitFilterProp=this.value; render();" style="flex:1;min-width:130px;">${propOptionsHtml}</select>
     </div>
-    ${groups || `<p style="font-size:13px;color:#9A988F;">Tidak ada kamar yang cocok dengan filter ini.</p>`}
+    <div id="unitListArea">${buildUnitGroupsHtml()}</div>
   `;
 }
 function markUnitKosong(unitId){
@@ -2946,8 +3014,16 @@ function submitAddUnit(){
 }
 
 // ================= TENANTS TAB =================
-function renderTenantsTab(){
-  const cardsData = tenants.map(t=>{
+function buildTenantListHtml(){
+  const search = (state.tenantSearch||"").toLowerCase();
+  let filteredTenants = tenants;
+  if(search) filteredTenants = tenants.filter(t=>{
+    const u = unitById(t.unitId);
+    const prop = u?propertyById(u.propertiId):null;
+    return t.nama.toLowerCase().includes(search) || (u&&u.nomor.toLowerCase().includes(search)) || (prop&&prop.nama.toLowerCase().includes(search));
+  });
+
+  const cardsData = filteredTenants.map(t=>{
     const u = unitById(t.unitId);
     const share = t.rumahShareTotal ? t.rumahShareTotal/t.rumahJmlOrang : (u?u.hargaBulanan:0);
     const telatHari = hariTelat(t.jatuhTempo);
@@ -2967,11 +3043,11 @@ function renderTenantsTab(){
     <div class="card" style="overflow:hidden;">
       <div class="table-scroll"><table>
         <thead><tr><th>Nama</th><th>Unit</th><th>Jatuh tempo</th><th>Status</th><th>Tagihan</th></tr></thead>
-        <tbody>${rows}</tbody>
+        <tbody>${rows || `<tr><td colspan="5" style="text-align:center;color:#9A988F;padding:20px;">Tidak ada penyewa yang cocok.</td></tr>`}</tbody>
       </table></div>
     </div>`;
 
-  const mobileCards = cardsData.length===0 ? `<p style="font-size:13px;color:#9A988F;text-align:center;padding:20px 0;">Belum ada penyewa.</p>` :
+  const mobileCards = cardsData.length===0 ? `<p style="font-size:13px;color:#9A988F;text-align:center;padding:20px 0;">Tidak ada penyewa yang cocok.</p>` :
     cardsData.map(({t,u,share,statusHtml})=>`
     <div class="card" style="padding:14px;margin-bottom:10px;cursor:pointer;" onclick="openTenantDetail('${t.id}')">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
@@ -2982,18 +3058,28 @@ function renderTenantsTab(){
       <div style="font-size:12px;color:#9A988F;">${u?esc(u.nomor):"-"} · jatuh tempo ${formatTanggal(t.jatuhTempo)}</div>
     </div>`).join("");
 
+  return state.isMobile ? mobileCards : desktopTable;
+}
+function updateTenantSearch(val){
+  state.tenantSearch = val;
+  const area = document.getElementById("tenantListArea");
+  if(area) area.innerHTML = buildTenantListHtml();
+}
+
+function renderTenantsTab(){
   return `
     <div class="tab-header">
       <h2>Penyewa</h2>
       <button class="btn btn-primary" onclick="openAddTenantForm()">${ICONS.plus} Penyewa</button>
     </div>
     <p style="margin:0 0 12px;font-size:13px;color:#6B7280;">Untuk rumah sewa yang dihuni 3-4 orang, biaya bisa dibagi rata otomatis. Klik ${state.isMobile?'kartu':'baris'} untuk lihat detail lengkap.</p>
+    <input type="text" placeholder="Cari nama penyewa, unit, atau properti..." value="${esc(state.tenantSearch||"")}" oninput="updateTenantSearch(this.value)" style="margin-bottom:12px;">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;font-size:13px;color:#374151;">
       <span>Denda keterlambatan:</span><span style="color:#6B7280;">Rp</span>
-      <input type="number" value="${state.dendaPerHari}" oninput="state.dendaPerHari=Number(this.value)||0" style="width:90px;padding:5px 8px;">
+      <input type="number" value="${state.dendaPerHari}" oninput="state.dendaPerHari=Number(this.value)||0; saveState();" style="width:90px;padding:5px 8px;">
       <span style="color:#6B7280;">/ hari telat</span>
     </div>
-    ${state.isMobile ? mobileCards : desktopTable}
+    <div id="tenantListArea">${buildTenantListHtml()}</div>
   `;
 }
 
