@@ -2124,6 +2124,9 @@ let state = {
   openHistoryFor: null,
   unitFilterStatus: "all",
   unitFilterProp: "all",
+  incomeSearch: "",
+  incomeFilterStatus: "all",
+  incomeFilterBulan: "all",
   docModalTenant: null,
   printIncomeId: null,
 };
@@ -2910,21 +2913,119 @@ function submitAddTenant(){
 }
 
 // ================= INCOME TAB =================
-function renderIncomeTab(){
-  const rows = income.slice().sort((a,b)=>new Date(b.tanggal)-new Date(a.tanggal)).map(i=>{
+function statusBadgeDot(status){
+  if(status==="lunas") return `<span class="fac-badge" style="background:#EAF3DE;color:#27500A;">🟢 Lunas</span>`;
+  if(status==="menunggu") return `<span class="fac-badge" style="background:#FFF6DC;color:#8A6A1D;">🟡 Menunggu</span>`;
+  return `<span class="fac-badge" style="background:#FCEBEB;color:#791F1F;">🔴 Telat</span>`;
+}
+
+function buildIncomeListHtml(){
+  const search = (state.incomeSearch||"").toLowerCase();
+  const filterStatus = state.incomeFilterStatus||"all";
+  const filterBulan = state.incomeFilterBulan||"all";
+
+  let filtered = income.slice();
+  if(search) filtered = filtered.filter(i=>{ const t=tenantById(i.tenantId); return t && t.nama.toLowerCase().includes(search); });
+  if(filterStatus!=="all") filtered = filtered.filter(i=>(i.status||"lunas")===filterStatus);
+  if(filterBulan!=="all") filtered = filtered.filter(i=>ymKey(i.tanggal)===filterBulan);
+  filtered.sort((a,b)=>new Date(b.tanggal)-new Date(a.tanggal));
+
+  const rowsHtml = filtered.map((i,idx)=>{
     const t = tenantById(i.tenantId);
-    const statusBadge = i.status==="lunas" ? badge(`${ICONS.check} Lunas`,"#27500A","#EAF3DE") : badge(`${ICONS.alert} Telat`,"#791F1F","#FCEBEB");
-    return `<tr>
-      <td>${esc(t?t.nama:"-")}</td><td>${esc(i.periode)}</td><td>${i.tanggal}</td>
-      <td class="mono">${rupiah(i.jumlah)}</td><td>${statusBadge}</td>
+    return `<tr style="background:${idx%2===1?'#F7F8F5':'#fff'};">
+      <td>${esc(t?t.nama:"-")}</td><td>${esc(i.periode)}</td><td>${formatTanggal(i.tanggal)}</td>
+      <td class="mono">${rupiah(i.jumlah)}</td><td>${statusBadgeDot(i.status)}</td>
       <td>
         <div style="display:flex;gap:6px;">
-          <button onclick="openReceipt('${i.id}')" style="display:flex;align-items:center;gap:5px;border:1px solid #B5D4F4;background:#E6F1FB;color:#0C447C;border-radius:7px;padding:5px 10px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">${ICONS.printer} Cetak</button>
+          <button onclick="openReceipt('${i.id}')" style="display:flex;align-items:center;gap:5px;border:1px solid #B5D4F4;background:#E6F1FB;color:#0C447C;border-radius:7px;padding:5px 10px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;">${ICONS.printer} Kwitansi</button>
           <button onclick="removeIncome('${i.id}')" title="Hapus" style="border:none;background:transparent;cursor:pointer;padding:4px;color:#A32D2D;">${ICONS.trash}</button>
         </div>
       </td>
     </tr>`;
   }).join("");
+
+  const desktopTable = `
+    <div class="card" style="overflow:hidden;" id="incomeTableWrap">
+      <div class="table-scroll" style="max-height:520px;overflow-y:auto;">
+        <table>
+          <thead style="position:sticky;top:0;z-index:2;"><tr><th>Penyewa</th><th>Periode</th><th>Tanggal</th><th>Jumlah</th><th>Status</th><th></th></tr></thead>
+          <tbody>${rowsHtml || `<tr><td colspan="6" style="text-align:center;color:#9A988F;padding:20px;">Tidak ada data yang cocok.</td></tr>`}</tbody>
+        </table>
+      </div>
+    </div>`;
+
+  const mobileCards = filtered.length===0 ? `<p style="font-size:13px;color:#9A988F;text-align:center;padding:20px 0;">Tidak ada data yang cocok.</p>` :
+    filtered.map(i=>{
+      const t = tenantById(i.tenantId);
+      return `<div class="card" style="padding:14px;margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <span style="font-weight:700;color:#1B2A41;font-size:14.5px;">${esc(t?t.nama:"-")}</span>
+          ${statusBadgeDot(i.status)}
+        </div>
+        <div class="mono" style="font-size:17px;font-weight:700;color:#173F27;margin-bottom:2px;">${rupiah(i.jumlah)}</div>
+        <div style="font-size:12px;color:#9A988F;margin-bottom:10px;">${esc(i.periode)} · ${formatTanggal(i.tanggal)}</div>
+        <div style="display:flex;gap:6px;">
+          <button onclick="openReceipt('${i.id}')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;border:1px solid #B5D4F4;background:#E6F1FB;color:#0C447C;border-radius:7px;padding:8px 0;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;">${ICONS.printer} Kwitansi</button>
+          <button onclick="removeIncome('${i.id}')" style="border:1px solid #F0C9C9;background:#FCEBEB;color:#A32D2D;border-radius:7px;padding:8px 12px;cursor:pointer;">${ICONS.trash}</button>
+        </div>
+      </div>`;
+    }).join("");
+
+  return state.isMobile ? mobileCards : desktopTable;
+}
+function updateIncomeSearch(val){
+  state.incomeSearch = val;
+  const area = document.getElementById("incomeListArea");
+  if(area) area.innerHTML = buildIncomeListHtml();
+}
+
+function renderIncomeTab(){
+  const filterStatus = state.incomeFilterStatus||"all";
+  const filterBulan = state.incomeFilterBulan||"all";
+  const bulanOptions = [...new Set(income.map(i=>ymKey(i.tanggal)))].sort().reverse();
+
+  // ---- Summary cards ----
+  const currentYm = ymKey(new Date().toISOString());
+  const totalPemasukan = income.filter(i=>i.status==="lunas").reduce((s,i)=>s+i.jumlah,0);
+  const bulanIni = income.filter(i=>i.status==="lunas" && ymKey(i.tanggal)===currentYm).reduce((s,i)=>s+i.jumlah,0);
+  const belumLunasCount = income.filter(i=>i.status!=="lunas").length;
+  const tahunanCount = tenants.filter(t=>t.metodeBayar==="tahunan").length;
+
+  const summaryHtml = `
+    <div class="flex-wrap-gap" style="margin-bottom:16px;">
+      <div class="stat-card">
+        <div style="font-size:11.5px;color:#6B7280;margin-bottom:4px;">Total pemasukan</div>
+        <div class="mono" style="font-size:17px;font-weight:700;color:#1B2A41;">${rupiah(totalPemasukan)}</div>
+      </div>
+      <div class="stat-card">
+        <div style="font-size:11.5px;color:#6B7280;margin-bottom:4px;">Bulan ini</div>
+        <div class="mono" style="font-size:17px;font-weight:700;color:#27500A;">${rupiah(bulanIni)}</div>
+      </div>
+      <div class="stat-card">
+        <div style="font-size:11.5px;color:#6B7280;margin-bottom:4px;">Belum lunas</div>
+        <div class="mono" style="font-size:17px;font-weight:700;color:#791F1F;">${belumLunasCount} orang</div>
+      </div>
+      <div class="stat-card">
+        <div style="font-size:11.5px;color:#6B7280;margin-bottom:4px;">Metode tahunan</div>
+        <div class="mono" style="font-size:17px;font-weight:700;color:#1B2A41;">${tahunanCount} orang</div>
+      </div>
+    </div>`;
+
+  // ---- Search + filters ----
+  const filtersHtml = `
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+      <input type="text" placeholder="Cari nama penyewa..." value="${esc(state.incomeSearch||"")}" oninput="updateIncomeSearch(this.value)" style="flex:2;min-width:150px;">
+      <select onchange="state.incomeFilterStatus=this.value; render();" style="flex:1;min-width:120px;">
+        <option value="all" ${filterStatus==="all"?"selected":""}>Semua status</option>
+        <option value="lunas" ${filterStatus==="lunas"?"selected":""}>🟢 Lunas</option>
+        <option value="menunggu" ${filterStatus==="menunggu"?"selected":""}>🟡 Menunggu</option>
+        <option value="telat" ${filterStatus==="telat"?"selected":""}>🔴 Telat</option>
+      </select>
+      <select onchange="state.incomeFilterBulan=this.value; render();" style="flex:1;min-width:120px;">
+        <option value="all">Semua bulan</option>
+        ${bulanOptions.map(b=>`<option value="${b}" ${filterBulan===b?"selected":""}>${ymLabel(b)}</option>`).join("")}
+      </select>
+    </div>`;
 
   return `
     <div class="tab-header">
@@ -2932,12 +3033,9 @@ function renderIncomeTab(){
       <button class="btn btn-primary" onclick="openAddIncomeForm()">${ICONS.plus} Catat pembayaran</button>
     </div>
     <p style="margin:0 0 16px;font-size:13px;color:#6B7280;">Riwayat pembayaran sewa, baik bulanan maupun tahunan.</p>
-    <div class="card" style="overflow:hidden;">
-      <div class="table-scroll"><table>
-        <thead><tr><th>Penyewa</th><th>Periode</th><th>Tanggal</th><th>Jumlah</th><th>Status</th><th></th></tr></thead>
-        <tbody>${rows}</tbody>
-      </table></div>
-    </div>
+    ${summaryHtml}
+    ${filtersHtml}
+    <div id="incomeListArea">${buildIncomeListHtml()}</div>
   `;
 }
 function removeIncome(id){ income = income.filter(x=>x.id!==id); render(); }
@@ -2952,7 +3050,7 @@ function openAddIncomeForm(prefillTenantId){
     <div class="field"><label class="field-label">Periode</label><input id="fPeriodeIncome" placeholder="Agu 2026" value="${preTenant?ymLabel(today.slice(0,7)):""}"></div>
     <div class="field"><label class="field-label">Tanggal bayar</label><input type="date" id="fTglIncome" value="${today}"></div>
     <div class="field"><label class="field-label">Jumlah (Rp)</label><input type="number" id="fJumlahIncome" value="${preShare||""}"></div>
-    <div class="field"><label class="field-label">Status</label><select id="fStatusIncome"><option value="lunas">Lunas</option><option value="telat">Telat</option></select></div>
+    <div class="field"><label class="field-label">Status</label><select id="fStatusIncome"><option value="lunas">🟢 Lunas</option><option value="menunggu">🟡 Menunggu</option><option value="telat">🔴 Telat</option></select></div>
     <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#374151;margin-bottom:14px;">
       <input type="checkbox" id="fAutoAdvance" checked style="width:auto;">
       Kalau lunas, otomatis majukan jatuh tempo penyewa ke periode berikutnya
@@ -2999,7 +3097,7 @@ function openReceipt(incomeId){
           <tr><td style="color:#6B7280;padding:5px 0;">Kamar / unit</td><td style="text-align:right;color:#374151;">${esc(u?u.nomor:"-")}</td></tr>
           <tr><td style="color:#6B7280;padding:5px 0;">Periode</td><td style="text-align:right;color:#374151;">${esc(i.periode)}</td></tr>
           <tr><td style="color:#6B7280;padding:5px 0;">Tanggal bayar</td><td style="text-align:right;color:#374151;">${formatTanggal(i.tanggal)}</td></tr>
-          <tr><td style="color:#6B7280;padding:5px 0;">Status</td><td style="text-align:right;">${i.status==='lunas'?'Lunas':'Telat'}</td></tr>
+          <tr><td style="color:#6B7280;padding:5px 0;">Status</td><td style="text-align:right;">${i.status==='lunas'?'Lunas':i.status==='menunggu'?'Menunggu':'Telat'}</td></tr>
         </table>
         <div style="background:#F7F8FA;border-radius:10px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;">
           <span style="font-size:13px;color:#6B7280;">Total dibayar</span>
