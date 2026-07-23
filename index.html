@@ -63,7 +63,7 @@ td{padding:10px 14px;color:var(--text);border-top:1px solid #EEECE3;white-space:
 .bottom-nav button{background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 8px;color:#8FA396;font-size:10.5px;font-family:inherit;}
 .bottom-nav button.active{color:var(--gold-light);}
 .finance-pills{display:none;gap:6px;margin-bottom:14px;background:#fff;border:1px solid var(--border);border-radius:10px;padding:4px;}
-.finance-pills button{flex:1;border:none;border-radius:7px;padding:7px 0;font-size:12.5px;font-weight:600;cursor:pointer;background:transparent;color:var(--muted);font-family:inherit;}
+.finance-pills button{flex:1;min-width:0;border:none;border-radius:7px;padding:7px 0;font-size:12.5px;font-weight:600;cursor:pointer;background:transparent;color:var(--muted);font-family:inherit;}
 .finance-pills button.active{background:var(--dark);color:#fff;}
 
 @media (max-width:700px){
@@ -2499,9 +2499,9 @@ function renderDashboard(){
         const label = overdue?`Telat ${Math.abs(days)} hari`:(days===0?"Jatuh tempo hari ini":`${days} hari lagi`);
         const fg = overdue?"#791F1F":"#633806", bg = overdue?"#FCEBEB":"#FAEEDA";
         return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-top:1px solid #EEECE3;gap:8px;">
-          <div>
+          <div style="flex:1;min-width:0;">
             <div style="font-size:13.5px;font-weight:600;color:#1B2A41;">${esc(t.nama)}</div>
-            <div style="font-size:11.5px;color:#9A988F;">${esc(prop?.nama)} · ${esc(u?.nomor)} · jatuh tempo ${formatTanggal(t.jatuhTempo)}</div>
+            <div style="font-size:11.5px;color:#9A988F;overflow-wrap:break-word;">${esc(prop?.nama)} · ${esc(u?.nomor)} · jatuh tempo ${formatTanggal(t.jatuhTempo)}</div>
           </div>
           <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
             ${badge(label,fg,bg)}
@@ -2532,7 +2532,7 @@ function renderDashboard(){
       <div style="font-size:13px;color:#374151;margin-bottom:6px;display:flex;justify-content:space-between;">
         <span>${esc(p.nama)}</span>${badge(TIPE_LABEL[p.tipe],"#633806","#FAEEDA")}
       </div>
-      <div style="display:flex;gap:5px;">${squares || '<span style="font-size:12px;color:#9A988F;">Belum ada unit</span>'}</div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;">${squares || '<span style="font-size:12px;color:#9A988F;">Belum ada unit</span>'}</div>
     </div>`;
   }).join("");
 
