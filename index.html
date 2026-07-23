@@ -2279,9 +2279,12 @@ function renderPublicView(){
         ${hargaBlock}
         ${belumTersediaBlock}
         <a href="${waLink(state.kontakPemilik,msg)}" target="_blank" rel="noopener noreferrer"
-          style="display:flex;align-items:center;justify-content:center;gap:6px;background:${isAvailable?'#173F27':'#fff'};color:${isAvailable?'#fff':'#173F27'};border:${isAvailable?'none':'1px solid #173F27'};border-radius:9px;padding:9px 0;font-size:13px;font-weight:600;text-decoration:none;">
+          style="display:flex;align-items:center;justify-content:center;gap:6px;background:${isAvailable?'#173F27':'#fff'};color:${isAvailable?'#fff':'#173F27'};border:${isAvailable?'none':'1px solid #173F27'};border-radius:9px;padding:9px 0;font-size:13px;font-weight:600;text-decoration:none;margin-bottom:6px;">
           ${ICONS.wa} ${isAvailable?"Tanya via WhatsApp":"Tanya / catat minat"}
         </a>
+        <button onclick="openBookingForm('${u.id}')" style="width:100%;display:flex;align-items:center;justify-content:center;gap:6px;background:#B9902E;color:#17331F;border:none;border-radius:9px;padding:9px 0;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">
+          ${ICONS.plus} Isi Form Booking
+        </button>
       </div>
     </div>`;
   }
@@ -2341,6 +2344,61 @@ function renderPublicView(){
     <a class="btn-wa" href="${waLink(state.kontakPemilik,genericMsg)}" target="_blank" rel="noopener noreferrer">${ICONS.wa} WhatsApp</a>
     <a class="btn-maps" href="${GMAPS_URL}" target="_blank" rel="noopener noreferrer">${ICONS.pin} Lokasi</a>
   </div>`;
+}
+
+function openBookingForm(prefillUnitId){
+  const availableUnits = units.filter(u=>u.status==="kosong");
+  const optionsSource = availableUnits.length>0 ? availableUnits : units;
+  const unitOptions = optionsSource.map(u=>{
+    const p = propertyById(u.propertiId);
+    return `<option value="${u.id}" ${u.id===prefillUnitId?"selected":""}>${esc(p?.nama)} - ${esc(u.nomor)}</option>`;
+  }).join("");
+
+  showModal("Form Booking", `
+    <div class="field"><label class="field-label">Nama lengkap</label><input id="fBookNama" placeholder="Nama Anda"></div>
+    <div class="field"><label class="field-label">Nomor HP / WhatsApp</label><input id="fBookHp" placeholder="08xx" inputmode="tel"></div>
+    <div class="field"><label class="field-label">Kamar yang diminati</label><select id="fBookUnit">${unitOptions}</select></div>
+    <div class="field"><label class="field-label">Rencana tanggal masuk</label><input type="date" id="fBookTanggal"></div>
+    <div class="field"><label class="field-label">Catatan (opsional)</label><input id="fBookCatatan" placeholder="Misal: butuh kamar mandi dalam"></div>
+    <p style="font-size:11px;color:#9A988F;margin:-4px 0 14px;">Setelah dikirim, WhatsApp akan terbuka dengan pesan yang sudah terisi otomatis. Booking baru resmi setelah dikonfirmasi oleh pemilik.</p>
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button class="btn btn-secondary" onclick="closeModal()">Batal</button>
+      <button class="btn btn-primary" onclick="submitBookingForm()">${ICONS.wa} Kirim via WhatsApp</button>
+    </div>
+  `);
+}
+function submitBookingForm(){
+  const nama = document.getElementById("fBookNama").value.trim();
+  const hp = document.getElementById("fBookHp").value.trim();
+  const unitId = document.getElementById("fBookUnit").value;
+  const tanggal = document.getElementById("fBookTanggal").value;
+  const catatan = document.getElementById("fBookCatatan").value.trim();
+  if(!nama || !hp || !unitId){
+    showModalInlineError("Mohon isi nama, nomor HP, dan pilih kamar terlebih dahulu.");
+    return;
+  }
+  const u = unitById(unitId); const p = u?propertyById(u.propertiId):null;
+  let msg = `📋 *FORM BOOKING - Griya Jaten Indah*\n\n`;
+  msg += `Nama: ${nama}\n`;
+  msg += `No. HP: ${hp}\n`;
+  msg += `Kamar diminati: ${p?.nama||"-"} - ${u?.nomor||"-"}\n`;
+  msg += `Rencana masuk: ${tanggal?formatTanggal(tanggal):"belum ditentukan"}\n`;
+  if(catatan) msg += `Catatan: ${catatan}\n`;
+  msg += `\nMohon info ketersediaan dan langkah selanjutnya. Terima kasih.`;
+  window.open(waLink(state.kontakPemilik, msg), "_blank");
+  closeModal();
+}
+function showModalInlineError(text){
+  let el = document.getElementById("bookFormError");
+  if(!el){
+    el = document.createElement("div");
+    el.id = "bookFormError";
+    el.style.cssText = "font-size:12.5px;color:#A32D2D;margin:-8px 0 12px;";
+    const modalBox = document.querySelector(".modal-box");
+    const btnRow = modalBox.querySelector("div[style*='justify-content:flex-end']");
+    modalBox.insertBefore(el, btnRow);
+  }
+  el.textContent = text;
 }
 
 function openOwnerLogin(){
