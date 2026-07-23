@@ -95,13 +95,16 @@ td{padding:10px 14px;color:var(--text);border-top:1px solid #EEECE3;white-space:
 .public-header{position:relative;background:linear-gradient(120deg,#0F2E1C 0%,#1B4B2C 55%,#173F27 100%);padding:18px 20px 30px;text-align:center;overflow:hidden;}
 .public-header .dotpattern{position:absolute;inset:0;background-image:radial-gradient(rgba(205,163,64,.35) 1px,transparent 1.4px);background-size:16px 16px;-webkit-mask-image:radial-gradient(circle at 85% 90%,black 0%,black 35%,transparent 70%);mask-image:radial-gradient(circle at 85% 90%,black 0%,black 35%,transparent 70%);pointer-events:none;}
 .public-header .glow{position:absolute;inset:0;background:radial-gradient(circle at 88% 6%,rgba(205,163,64,.25),transparent 50%),radial-gradient(circle at 4% 96%,rgba(255,255,255,.05),transparent 45%);pointer-events:none;}
-.public-header-inner{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:12px;max-width:480px;margin:0 auto;}
-.public-header-inner img.logo{width:52px;height:52px;object-fit:contain;flex-shrink:0;}
-.public-title{color:#FFFDF6;font-size:22px;line-height:1.15;font-weight:800;margin:0;font-family:'Playfair Display',Georgia,serif;letter-spacing:.2px;
+.public-header-inner{position:relative;z-index:1;display:flex;align-items:center;gap:14px;max-width:520px;margin:0 auto;text-align:left;}
+.public-header-logo-col{flex:0 0 35%;display:flex;align-items:center;justify-content:center;}
+.public-header-logo-col img.logo{width:100%;max-width:100px;height:auto;object-fit:contain;}
+.public-header-content-col{flex:0 0 65%;min-width:0;}
+.public-title{color:#FFFDF6;font-size:21px;line-height:1.15;font-weight:800;margin:0;font-family:'Playfair Display',Georgia,serif;letter-spacing:.2px;
   text-shadow:1px 1px 0 #0a2416,2px 2px 0 #0a2416,3px 4px 8px rgba(0,0,0,.4);}
-.public-slogan{color:#D9B968;font-size:11.5px;font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-top:2px;}
-.public-location{position:relative;z-index:1;color:#C9D9CE;font-size:12px;margin:10px auto 0;max-width:480px;display:flex;align-items:center;justify-content:center;gap:5px;}
-.public-header-actions{position:relative;z-index:1;display:flex;gap:8px;justify-content:center;margin-top:12px;}
+.public-slogan{color:#D9B968;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-top:3px;}
+.public-location{color:#C9D9CE;font-size:11.5px;margin-top:8px;display:flex;align-items:center;gap:5px;}
+.public-avail-badge{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:#EAF6E2;margin-top:8px;}
+.public-header-actions{display:flex;gap:8px;margin-top:12px;}
 .public-header-actions a{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;text-decoration:none;border-radius:999px;padding:7px 14px;}
 .public-header-actions .btn-wa{background:#EA9010;color:#3A2503;}
 .public-header-actions .btn-maps{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.35);}
@@ -127,9 +130,10 @@ td{padding:10px 14px;color:var(--text);border-top:1px solid #EEECE3;white-space:
 .sticky-contact-bar .btn-wa{background:#173F27;color:#fff;}
 .sticky-contact-bar .btn-maps{background:#fff;color:#173F27;border:1px solid #173F27;}
 
-@media (max-width:700px){
-  .public-header-inner img.logo{width:46px;height:46px;}
-  .public-title{font-size:19px;}
+@media (max-width:480px){
+  .public-header-logo-col img.logo{max-width:78px;}
+  .public-title{font-size:17px;}
+  .public-header-actions a{padding:6px 10px;font-size:11.5px;}
 }
 
 .tab-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:10px;}
@@ -2297,16 +2301,17 @@ function renderPublicView(){
       <div class="dotpattern"></div>
       <div class="glow"></div>
       <div class="public-header-inner">
-        <img class="logo" src="${LOGO_ICON_GOLD}" alt="Griya Jaten Indah">
-        <div style="text-align:left;">
+        <div class="public-header-logo-col"><img class="logo" src="${LOGO_ICON_GOLD}" alt="Griya Jaten Indah"></div>
+        <div class="public-header-content-col">
           <h1 class="public-title">Griya Jaten Indah</h1>
           <div class="public-slogan">Family Homestay &amp; Kost</div>
+          <div class="public-location">${ICONS.pin} Jaten, Sendangadi, Kec. Mlati, Sleman</div>
+          <div class="public-avail-badge">🟢 ${available.length} Kamar Tersedia</div>
+          <div class="public-header-actions">
+            <a class="btn-wa" href="${waLink(state.kontakPemilik,genericMsg)}" target="_blank" rel="noopener noreferrer">${ICONS.wa} WhatsApp</a>
+            <a class="btn-maps" href="${GMAPS_URL}" target="_blank" rel="noopener noreferrer">${ICONS.pin} Maps</a>
+          </div>
         </div>
-      </div>
-      <div class="public-location">${ICONS.pin} Jaten, Sendangadi, Kec. Mlati, Sleman</div>
-      <div class="public-header-actions">
-        <a class="btn-wa" href="${waLink(state.kontakPemilik,genericMsg)}" target="_blank" rel="noopener noreferrer">${ICONS.wa} WhatsApp</a>
-        <a class="btn-maps" href="${GMAPS_URL}" target="_blank" rel="noopener noreferrer">${ICONS.pin} Maps</a>
       </div>
       <svg class="public-wave" viewBox="0 0 1200 60" preserveAspectRatio="none">
         <path d="M0,22 C280,58 340,-8 620,26 C860,54 960,4 1200,24 L1200,60 L0,60 Z" fill="#F6F8F2"/>
