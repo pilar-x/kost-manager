@@ -96,8 +96,12 @@ td{padding:10px 14px;color:var(--text);border-top:1px solid #EEECE3;white-space:
 .public-header .dotpattern{position:absolute;inset:0;background-image:radial-gradient(rgba(205,163,64,.35) 1px,transparent 1.4px);background-size:16px 16px;-webkit-mask-image:radial-gradient(circle at 85% 90%,black 0%,black 35%,transparent 70%);mask-image:radial-gradient(circle at 85% 90%,black 0%,black 35%,transparent 70%);pointer-events:none;}
 .public-header .glow{position:absolute;inset:0;background:radial-gradient(circle at 88% 6%,rgba(205,163,64,.25),transparent 50%),radial-gradient(circle at 4% 96%,rgba(255,255,255,.05),transparent 45%);pointer-events:none;}
 .public-header-inner{position:relative;z-index:1;display:flex;align-items:center;gap:14px;max-width:520px;margin:0 auto;text-align:left;}
-.public-header-logo-col{flex:0 0 35%;display:flex;align-items:center;justify-content:center;}
-.public-header-logo-col img.logo{width:100%;max-width:100px;height:auto;object-fit:contain;}
+.public-header-logo-col{flex:0 0 35%;position:relative;display:flex;align-items:center;justify-content:center;}
+.public-header-logo-col img.logo{position:relative;z-index:1;width:100%;max-width:100px;height:auto;object-fit:contain;}
+.logo-ghost{position:absolute;width:220%;max-width:230px;opacity:.14;filter:brightness(1.4);pointer-events:none;z-index:0;transform:translate(-6%,-4%);}
+@media (max-width:480px){
+  .logo-ghost{max-width:170px;}
+}
 .public-header-content-col{flex:0 0 65%;min-width:0;}
 .public-title{color:#FFFDF6;font-size:32px;line-height:1.15;font-weight:800;margin:0;font-family:'Playfair Display',Georgia,serif;letter-spacing:.2px;
   text-shadow:1px 1px 0 #0a2416,2px 2px 0 #0a2416,3px 4px 8px rgba(0,0,0,.4);}
@@ -2304,7 +2308,10 @@ function renderPublicView(){
       <div class="dotpattern"></div>
       <div class="glow"></div>
       <div class="public-header-inner">
-        <div class="public-header-logo-col"><img class="logo" src="${LOGO_ICON_GOLD}" alt="Griya Jaten Indah"></div>
+        <div class="public-header-logo-col">
+          <img class="logo-ghost" src="${LOGO_ICON_GOLD}" alt="">
+          <img class="logo" src="${LOGO_ICON_GOLD}" alt="Griya Jaten Indah">
+        </div>
         <div class="public-header-content-col">
           <h1 class="public-title">Griya Jaten Indah</h1>
           <div class="public-slogan">Family Homestay &amp; Kost</div>
