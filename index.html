@@ -2171,6 +2171,10 @@ let state = {
   incomeSearch: "",
   tenantSearch: "",
   unitSearch: "",
+  expenseSearch: "",
+  expenseFilterKat: "all",
+  expenseFilterProp: "all",
+  expenseFilterBulan: "all",
   incomeFilterStatus: "all",
   incomeFilterBulan: "all",
   docModalTenant: null,
@@ -3493,25 +3497,130 @@ async function shareReceipt(nomorKwitansi){
 }
 
 // ================= EXPENSES TAB =================
-function renderExpensesTab(){
-  const rows = expenses.slice().sort((a,b)=>new Date(b.tanggal)-new Date(a.tanggal)).map(e=>{
+function buildExpenseListHtml(){
+  const search = (state.expenseSearch||"").toLowerCase();
+  const filterKat = state.expenseFilterKat||"all";
+  const filterProp = state.expenseFilterProp||"all";
+  const filterBulan = state.expenseFilterBulan||"all";
+
+  let filtered = expenses.slice();
+  if(search) filtered = filtered.filter(e=>{
+    const p = propertyById(e.propertiId);
+    return (e.catatan||"").toLowerCase().includes(search) || (p&&p.nama.toLowerCase().includes(search));
+  });
+  if(filterKat!=="all") filtered = filtered.filter(e=>e.kategori===filterKat);
+  if(filterProp!=="all") filtered = filtered.filter(e=>e.propertiId===filterProp);
+  if(filterBulan!=="all") filtered = filtered.filter(e=>ymKey(e.tanggal)===filterBulan);
+  filtered.sort((a,b)=>new Date(b.tanggal)-new Date(a.tanggal));
+
+  const rowsHtml = filtered.map((e,idx)=>{
     const meta = KATEGORI_META[e.kategori]||KATEGORI_META.lain;
     const p = propertyById(e.propertiId);
-    return `<tr>
-      <td>${esc(p?p.nama:"-")}</td><td>${meta.label}</td><td>${e.tanggal}</td>
+    return `<tr style="background:${idx%2===1?'#F7F8F5':'#fff'};">
+      <td>${esc(p?p.nama:"-")}</td><td>${meta.label}</td><td>${formatTanggal(e.tanggal)}</td>
       <td class="mono">${rupiah(e.jumlah)}</td><td style="color:#9A988F;">${esc(e.catatan)||"-"}</td>
       <td><button onclick="removeExpense('${e.id}')" title="Hapus" style="border:none;background:transparent;cursor:pointer;padding:4px;color:#A32D2D;">${ICONS.trash}</button></td>
     </tr>`;
   }).join("");
+
+  const desktopTable = `
+    <div class="card" style="overflow:hidden;">
+      <div class="table-scroll" style="max-height:520px;overflow-y:auto;">
+        <table>
+          <thead style="position:sticky;top:0;z-index:2;"><tr><th>Properti</th><th>Kategori</th><th>Tanggal</th><th>Jumlah</th><th>Catatan</th><th></th></tr></thead>
+          <tbody>${rowsHtml || `<tr><td colspan="6" style="text-align:center;color:#9A988F;padding:20px;">Tidak ada data yang cocok.</td></tr>`}</tbody>
+        </table>
+      </div>
+    </div>`;
+
+  const mobileCards = filtered.length===0 ? `<p style="font-size:13px;color:#9A988F;text-align:center;padding:20px 0;">Tidak ada data yang cocok.</p>` :
+    filtered.map(e=>{
+      const meta = KATEGORI_META[e.kategori]||KATEGORI_META.lain;
+      const p = propertyById(e.propertiId);
+      return `<div class="card" style="padding:14px;margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <span style="font-weight:700;color:#1B2A41;font-size:14.5px;">${meta.label}</span>
+          <button onclick="removeExpense('${e.id}')" style="border:1px solid #F0C9C9;background:#FCEBEB;color:#A32D2D;border-radius:7px;padding:5px 8px;cursor:pointer;">${ICONS.trash}</button>
+        </div>
+        <div class="mono" style="font-size:17px;font-weight:700;color:#791F1F;margin-bottom:2px;">${rupiah(e.jumlah)}</div>
+        <div style="font-size:12px;color:#9A988F;margin-bottom:4px;">${esc(p?p.nama:"-")} · ${formatTanggal(e.tanggal)}</div>
+        ${e.catatan?`<div style="font-size:12px;color:#6B7280;">${esc(e.catatan)}</div>`:""}
+      </div>`;
+    }).join("");
+
+  return state.isMobile ? mobileCards : desktopTable;
+}
+function updateExpenseSearch(val){
+  state.expenseSearch = val;
+  const area = document.getElementById("expenseListArea");
+  if(area) area.innerHTML = buildExpenseListHtml();
+}
+
+function renderExpensesTab(){
+  const filterKat = state.expenseFilterKat||"all";
+  const filterProp = state.expenseFilterProp||"all";
+  const filterBulan = state.expenseFilterBulan||"all";
+  const bulanOptions = [...new Set(expenses.map(e=>ymKey(e.tanggal)))].sort().reverse();
+
+  const currentYm = ymKey(new Date().toISOString());
+  const totalPengeluaran = expenses.reduce((s,e)=>s+e.jumlah,0);
+  const bulanIni = expenses.filter(e=>ymKey(e.tanggal)===currentYm).reduce((s,e)=>s+e.jumlah,0);
+  const byKat = {};
+  expenses.forEach(e=>{ byKat[e.kategori] = (byKat[e.kategori]||0)+e.jumlah; });
+  const topKatEntry = Object.entries(byKat).sort((a,b)=>b[1]-a[1])[0];
+  const topKatLabel = topKatEntry ? (KATEGORI_META[topKatEntry[0]]||KATEGORI_META.lain).label : "-";
+  const bulanCount = new Set(expenses.map(e=>ymKey(e.tanggal))).size || 1;
+  const rataRata = totalPengeluaran / bulanCount;
+
+  const summaryHtml = `
+    <div class="flex-wrap-gap" style="margin-bottom:16px;">
+      <div class="stat-card">
+        <div style="font-size:11.5px;color:#6B7280;margin-bottom:4px;">Total pengeluaran</div>
+        <div class="mono" style="font-size:17px;font-weight:700;color:#1B2A41;">${rupiah(totalPengeluaran)}</div>
+      </div>
+      <div class="stat-card">
+        <div style="font-size:11.5px;color:#6B7280;margin-bottom:4px;">Bulan ini</div>
+        <div class="mono" style="font-size:17px;font-weight:700;color:#791F1F;">${rupiah(bulanIni)}</div>
+      </div>
+      <div class="stat-card">
+        <div style="font-size:11.5px;color:#6B7280;margin-bottom:4px;">Kategori terbesar</div>
+        <div style="font-size:17px;font-weight:700;color:#1B2A41;">${topKatLabel}</div>
+      </div>
+      <div class="stat-card">
+        <div style="font-size:11.5px;color:#6B7280;margin-bottom:4px;">Rata-rata / bulan</div>
+        <div class="mono" style="font-size:17px;font-weight:700;color:#1B2A41;">${rupiah(rataRata)}</div>
+      </div>
+    </div>`;
+
+  const propOptions = properties.map(p=>`<option value="${p.id}" ${filterProp===p.id?"selected":""}>${esc(p.nama)}</option>`).join("");
+  const katOptions = Object.entries(KATEGORI_META).map(([k,v])=>`<option value="${k}" ${filterKat===k?"selected":""}>${v.label}</option>`).join("");
+
+  const filtersHtml = `
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+      <input type="text" placeholder="Cari catatan atau properti..." value="${esc(state.expenseSearch||"")}" oninput="updateExpenseSearch(this.value)" style="flex:2;min-width:150px;">
+      <select onchange="state.expenseFilterKat=this.value; render();" style="flex:1;min-width:120px;">
+        <option value="all" ${filterKat==="all"?"selected":""}>Semua kategori</option>
+        ${katOptions}
+      </select>
+      <select onchange="state.expenseFilterProp=this.value; render();" style="flex:1;min-width:120px;">
+        <option value="all" ${filterProp==="all"?"selected":""}>Semua properti</option>
+        ${propOptions}
+      </select>
+      <select onchange="state.expenseFilterBulan=this.value; render();" style="flex:1;min-width:120px;">
+        <option value="all">Semua bulan</option>
+        ${bulanOptions.map(b=>`<option value="${b}" ${filterBulan===b?"selected":""}>${ymLabel(b)}</option>`).join("")}
+      </select>
+    </div>`;
+
   return `
     <div class="tab-header">
       <h2>Pengeluaran operasional</h2>
       <button class="btn btn-primary" onclick="openAddExpenseForm()">${ICONS.plus} Catat pengeluaran</button>
     </div>
     <p style="margin:0 0 16px;font-size:13px;color:#6B7280;">Listrik, air, internet, dan biaya operasional lain per properti.</p>
-    <div class="card" style="overflow:hidden;">
-      <div class="table-scroll"><table><thead><tr><th>Properti</th><th>Kategori</th><th>Tanggal</th><th>Jumlah</th><th>Catatan</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
-    </div>
+    ${summaryHtml}
+    ${filtersHtml}
+    <div id="expenseListArea">${buildExpenseListHtml()}</div>
   `;
 }
 function removeExpense(id){ expenses = expenses.filter(x=>x.id!==id); render(); }
