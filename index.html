@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#173F27">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Montserrat:wght@600;700&family=Cormorant+Garamond:ital@1&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <style>
@@ -99,9 +99,10 @@ td{padding:10px 14px;color:var(--text);border-top:1px solid #EEECE3;white-space:
 .public-header-logo-col{flex:0 0 35%;display:flex;align-items:center;justify-content:center;}
 .public-header-logo-col img.logo{width:100%;max-width:100px;height:auto;object-fit:contain;}
 .public-header-content-col{flex:0 0 65%;min-width:0;}
-.public-title{color:#FFFDF6;font-size:21px;line-height:1.15;font-weight:800;margin:0;font-family:'Playfair Display',Georgia,serif;letter-spacing:.2px;
+.public-title{color:#FFFDF6;font-size:32px;line-height:1.15;font-weight:800;margin:0;font-family:'Playfair Display',Georgia,serif;letter-spacing:.2px;
   text-shadow:1px 1px 0 #0a2416,2px 2px 0 #0a2416,3px 4px 8px rgba(0,0,0,.4);}
-.public-slogan{color:#D9B968;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-top:3px;}
+.public-slogan{color:#D9B968;font-size:12.5px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-top:4px;font-family:'Montserrat',sans-serif;}
+.public-tagline{color:#EAF1E6;font-size:14px;font-style:italic;font-family:'Cormorant Garamond',Georgia,serif;margin-top:6px;}
 .public-location{color:#C9D9CE;font-size:11.5px;margin-top:8px;display:flex;align-items:center;gap:5px;}
 .public-avail-badge{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:#EAF6E2;margin-top:8px;}
 .public-header-actions{display:flex;gap:8px;margin-top:12px;}
@@ -132,7 +133,9 @@ td{padding:10px 14px;color:var(--text);border-top:1px solid #EEECE3;white-space:
 
 @media (max-width:480px){
   .public-header-logo-col img.logo{max-width:78px;}
-  .public-title{font-size:17px;}
+  .public-title{font-size:22px;}
+  .public-slogan{font-size:10.5px;}
+  .public-tagline{font-size:12.5px;}
   .public-header-actions a{padding:6px 10px;font-size:11.5px;}
 }
 
@@ -2305,6 +2308,7 @@ function renderPublicView(){
         <div class="public-header-content-col">
           <h1 class="public-title">Griya Jaten Indah</h1>
           <div class="public-slogan">Family Homestay &amp; Kost</div>
+          <div class="public-tagline">Nyaman tinggalnya, tenang keluarganya.</div>
           <div class="public-location">${ICONS.pin} Jaten, Sendangadi, Kec. Mlati, Sleman</div>
           <div class="public-avail-badge">🟢 ${available.length} Kamar Tersedia</div>
           <div class="public-header-actions">
