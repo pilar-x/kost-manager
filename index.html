@@ -1029,6 +1029,48 @@ let tenants = [];
 let income = [];
 
 let expenses = [];
+let tataTertib = `TATA TERTIB RUMAH KOS
+GRIYA JATEN INDAH (GJI)
+Alamat: Jl. Kabupaten (Utara), Ds. Jaten RT.07/RW.31, Sendangadi, Mlati, Sleman, D.I. Yogyakarta.
+
+1. Setiap penghuni kos wajib menyerahkan fotokopi KTP/SIM kepada Pemilik Kos.
+2. Pembayaran bulanan kos dilakukan sesuai dengan tanggal masuk setiap bulannya, melalui tunai atau transfer.
+3. Penghuni kos wajib memelihara fasilitas yang disediakan di setiap kamar, yaitu: kasur, meja, kursi, lemari, kelengkapan kamar mandi maupun fasilitas lainnya.
+4. Penghuni kos DILARANG MEMASUKKAN TAMU LAWAN JENIS (bukan muhrim) ke dalam kamar/rumah. (MENERIMA TAMU DI RUANG TAMU/TERAS SAJA).
+5. Waktu menerima tamu antara pukul 06.00 s.d. 22.00 WIB. (Lebih dari pukul 22.00 WIB dilarang menerima tamu).
+6. Apabila membawa keluarga atau teman (bukan lawan jenis) untuk menginap, wajib:
+* Melapor kepada pengurus kos dan menyerahkan KTP.
+* Dikenakan biaya Rp50.000/malam/orang.
+* Apabila menambah kasur dikenakan biaya tambahan Rp50.000/kasur.
+7. Penghuni kos wajib dan bertanggung jawab dalam menjaga kebersihan, kerapihan, keamanan, dan kenyamanan rumah kos, mushola, kamar kos, serta kamar mandi masing-masing.
+8. Keluar masuk kos, pintu pagar harus selalu terkunci.
+9. Kunci kamar dan gerbang yang dibawa penghuni kos merupakan barang pinjaman selama menempati kamar. Apabila hilang, wajib segera melapor kepada pengurus/pemilik kos dan mengganti biaya pembuatan kunci baru.
+10. Pengelola/Pemilik kos tidak bertanggung jawab atas kehilangan atau kerusakan barang milik penghuni kos.
+11. Penghuni kos dilarang melakukan perubahan, seperti:
+* Memaku tembok.
+* Mencoret-coret tembok dan furnitur.
+* Menempel poster dan sejenisnya.
+12. Buang sampah pada tempat yang telah disediakan.
+13. Dilarang merokok di dalam rumah kos/kamar (diperbolehkan di teras saja).
+14. Parkir kendaraan dengan rapi dan saling menghormati antar penghuni kos.
+15. Dilarang membawa hewan peliharaan, senjata api, dan barang-barang lainnya yang bertentangan dengan undang-undang pidana.
+16. ADA TAMBAHAN BIAYA dari harga sewa kamar yang disepakati apabila membawa peralatan elektronik sebagai berikut:
+* TV Rp25.000/bulan
+* Dispenser Rp40.000/bulan
+* Kulkas Rp100.000/bulan
+* Rice Cooker Rp10.000/bulan
+* AC Rp850.000/bulan
+17. Para penghuni kos harus selalu menjaga kerukunan dan keharmonisan dalam bersikap, berkomunikasi, serta menjaga etika pergaulan yang baik.
+18. Pemilik kos berhak untuk MENGHENTIKAN KONTRAK KOS apabila penghuni:
+* Melakukan perbuatan tidak senonoh/mesum/maksiat.
+* Melakukan miras/mabuk dan sejenisnya.
+* Membuat keributan/kegaduhan yang mengganggu penghuni kos lainnya.
+* Pemilik kos berhak memproses secara hukum apabila penghuni kos tidak mematuhi peraturan-peraturan tersebut.
+19. Penghuni kos dianggap telah mengetahui dan menyetujui Peraturan/Tata Tertib ini. Semoga penghuni Kos Griya Jaten Indah dapat tinggal dengan nyaman, tenang, dan damai. Aamiin.
+
+Tertanda,
+Pengurus/Pemilik Kos
+Griya Jaten Indah`;
 
 let riwayat = [];
 
@@ -1037,7 +1079,7 @@ const STORAGE_KEY = "griya-jaten-indah-data-v1";
 
 function saveState(){
   try{
-    const payload = { properties, units, tenants, income, expenses, riwayat, dendaPerHari: state.dendaPerHari, kontakPemilik: state.kontakPemilik };
+    const payload = { properties, units, tenants, income, expenses, riwayat, tataTertib, dendaPerHari: state.dendaPerHari, kontakPemilik: state.kontakPemilik };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
   }catch(e){
     console.warn("Gagal menyimpan data ke localStorage:", e);
@@ -1055,6 +1097,7 @@ function loadState(){
     if(data.income) income = data.income;
     if(data.expenses) expenses = data.expenses;
     if(data.riwayat) riwayat = data.riwayat;
+    if(typeof data.tataTertib === "string") tataTertib = data.tataTertib;
     if(typeof data.dendaPerHari === "number") state.dendaPerHari = data.dendaPerHari;
     if(typeof data.kontakPemilik === "string") state.kontakPemilik = data.kontakPemilik;
     return true;
@@ -1131,6 +1174,10 @@ function daysUntil(dateStr){
   const today = new Date(); today.setHours(0,0,0,0);
   const target = new Date(dateStr); target.setHours(0,0,0,0);
   return Math.round((target-today)/86400000);
+}
+function pageUrlWithHash(hash){
+  const base = window.location.href.split("#")[0];
+  return base + "#" + hash;
 }
 function waLink(kontak,message){
   let phone = (kontak||"").replace(/\D/g,"");
@@ -1277,6 +1324,7 @@ function renderPublicView(){
             <a class="btn-wa" href="${waLink(state.kontakPemilik,genericMsg)}" target="_blank" rel="noopener noreferrer">${ICONS.wa} WhatsApp</a>
             <a class="btn-maps" href="${GMAPS_URL}" target="_blank" rel="noopener noreferrer">${ICONS.pin} Maps</a>
           </div>
+          <button onclick="openTataTertibModal()" style="background:none;border:none;color:#C9D9CE;font-size:11px;text-decoration:underline;cursor:pointer;font-family:inherit;padding:8px 0 0;">${ICONS.doc} Lihat Tata Tertib Kost</button>
         </div>
       </div>
       <svg class="public-wave" viewBox="0 0 1200 60" preserveAspectRatio="none">
@@ -1336,7 +1384,7 @@ function submitBookingForm(){
   msg += `Kamar diminati: ${p?.nama||"-"} - ${u?.nomor||"-"}\n`;
   msg += `Rencana masuk: ${tanggal?formatTanggal(tanggal):"belum ditentukan"}\n`;
   if(catatan) msg += `Catatan: ${catatan}\n`;
-  msg += `\nMohon info ketersediaan dan langkah selanjutnya. Terima kasih.`;
+  msg += `\nMohon info ketersediaan dan langkah selanjutnya. Terima kasih.\n\n📄 Tata tertib kost: ${pageUrlWithHash("tata-tertib")}`;
   window.open(waLink(state.kontakPemilik, msg), "_blank");
   closeModal();
 }
@@ -1351,6 +1399,76 @@ function showModalInlineError(text){
     modalBox.insertBefore(el, btnRow);
   }
   el.textContent = text;
+}
+
+function openEditTataTertibModal(){
+  showModal("Edit Tata Tertib Kost", `
+    <p style="font-size:11.5px;color:#6B7280;margin:0 0 10px;line-height:1.5;">
+      Format: baris paling atas (sebelum poin nomor 1) jadi <b>kop/judul</b>. Baris <b>"1. ..."</b>, <b>"2. ..."</b> dst jadi poin bernomor. Baris yang diawali <b>"* "</b> jadi sub-poin di bawah poin sebelumnya. Baris yang diawali <b>"Tertanda,"</b> dan sesudahnya jadi bagian tanda tangan di bawah.
+    </p>
+    <textarea id="fTataTertib" rows="16" style="width:100%;box-sizing:border-box;font-family:inherit;font-size:12.5px;padding:10px;border-radius:8px;border:1px solid #DDD9CC;resize:vertical;">${esc(tataTertib)}</textarea>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;">
+      <button class="btn btn-secondary" onclick="closeModal()">Batal</button>
+      <button class="btn btn-primary" onclick="submitTataTertib()">Simpan</button>
+    </div>
+  `);
+}
+function submitTataTertib(){
+  tataTertib = document.getElementById("fTataTertib").value;
+  closeModal();
+  render();
+}
+
+function parseTataTertib(text){
+  const lines = text.split("\n").map(s=>s.trim());
+  const header = [];
+  const points = [];
+  const footer = [];
+  let mode = "header";
+  let current = null;
+  for(const line of lines){
+    if(!line) continue;
+    const numMatch = line.match(/^(\d+)\.\s*(.*)$/);
+    if(numMatch){
+      mode = "points";
+      if(current) points.push(current);
+      current = { main: numMatch[2], subs: [] };
+      continue;
+    }
+    if(/^tertanda/i.test(line)){
+      if(current){ points.push(current); current = null; }
+      mode = "footer";
+      footer.push(line);
+      continue;
+    }
+    if(mode==="points" && (line.startsWith("*")||line.startsWith("-"))){
+      if(current) current.subs.push(line.replace(/^[*\-]\s*/,""));
+      continue;
+    }
+    if(mode==="header") header.push(line);
+    else if(mode==="points" && current) current.main += " " + line;
+    else if(mode==="footer") footer.push(line);
+  }
+  if(current) points.push(current);
+  return { header, points, footer };
+}
+function openTataTertibModal(){
+  const p = parseTataTertib(tataTertib);
+  showModal("Tata Tertib Kost", `
+    ${p.header.length ? `<div style="text-align:center;border-bottom:1px solid #E4E2D8;padding-bottom:12px;margin-bottom:14px;">
+      ${p.header.map((h,i)=>`<div style="font-size:${i===0?'14px':'12px'};color:${i===0?'#173F27':'#6B7280'};font-weight:${i<2?'700':'400'};margin-bottom:2px;">${esc(h)}</div>`).join("")}
+    </div>` : ""}
+    <ol style="margin:0 0 16px;padding-left:20px;">
+      ${p.points.map(pt=>`<li style="font-size:13px;color:#374151;margin-bottom:10px;line-height:1.5;">
+        ${esc(pt.main)}
+        ${pt.subs.length?`<ul style="margin:6px 0 0;padding-left:16px;">${pt.subs.map(s=>`<li style="font-size:12px;color:#4B5563;margin-bottom:3px;">${esc(s)}</li>`).join("")}</ul>`:""}
+      </li>`).join("")}
+    </ol>
+    ${p.footer.length ? `<div style="text-align:center;font-size:12px;color:#6B7280;border-top:1px solid #E4E2D8;padding-top:12px;">${p.footer.map(f=>`<div>${esc(f)}</div>`).join("")}</div>` : ""}
+    <div style="display:flex;justify-content:flex-end;margin-top:16px;">
+      <button class="btn btn-secondary" onclick="closeModal()">Tutup</button>
+    </div>
+  `);
 }
 
 function openOwnerLogin(){
@@ -1417,6 +1535,7 @@ function renderOwnerShell(){
         <input type="file" id="importFileInputDesktop" accept=".json" style="display:none;" onchange="importAllData(event)">
       </div>
       <button class="sidebar-switch-btn" onclick="state.role='public'; render();">${ICONS.logout} Lihat tampilan calon penyewa</button>
+      <button class="sidebar-switch-btn" onclick="openEditTataTertibModal();">${ICONS.edit} Edit Tata Tertib</button>
       <div class="sidebar-note">Mode pemilik · data tersimpan otomatis di perangkat ini</div>
     </div>`;
 
@@ -1483,6 +1602,7 @@ function openMobileSettings(){
       <input id="mobileWaInput" value="${esc(state.kontakPemilik)}">
     </div>
     <button class="btn btn-secondary" style="width:100%;display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:10px;" onclick="saveMobileWaAndSwitch()">${ICONS.logout} Lihat tampilan calon penyewa</button>
+    <button class="btn btn-secondary" style="width:100%;display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:10px;" onclick="closeModal(); openEditTataTertibModal();">${ICONS.edit} Edit Tata Tertib Kost</button>
     <div style="border-top:1px solid #EEECE3;margin:14px 0;padding-top:14px;">
       <div style="font-size:12px;font-weight:600;color:#6B7280;margin-bottom:8px;">Cadangkan data</div>
       <div style="display:flex;gap:8px;margin-bottom:6px;">
@@ -1502,7 +1622,7 @@ function saveMobileWaAndSwitch(){
   render();
 }
 function exportAllData(){
-  const payload = { properties, units, tenants, income, expenses, riwayat, dendaPerHari: state.dendaPerHari, kontakPemilik: state.kontakPemilik, exportedAt: new Date().toISOString() };
+  const payload = { properties, units, tenants, income, expenses, riwayat, tataTertib, dendaPerHari: state.dendaPerHari, kontakPemilik: state.kontakPemilik, exportedAt: new Date().toISOString() };
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
@@ -1525,6 +1645,7 @@ function importAllData(evt){
       if(!confirm("Import akan MENIMPA semua data yang ada sekarang dengan isi file backup ini. Lanjutkan?")) return;
       properties = data.properties||[]; units = data.units||[]; tenants = data.tenants||[];
       income = data.income||[]; expenses = data.expenses||[]; riwayat = data.riwayat||[];
+      if(typeof data.tataTertib==="string") tataTertib = data.tataTertib;
       if(typeof data.dendaPerHari==="number") state.dendaPerHari = data.dendaPerHari;
       if(typeof data.kontakPemilik==="string") state.kontakPemilik = data.kontakPemilik;
       closeModal();
@@ -2731,6 +2852,9 @@ function render(){
 }
 loadState();
 render();
+if(window.location.hash === "#tata-tertib"){
+  setTimeout(() => { if(state.role==="public") openTataTertibModal(); }, 100);
+}
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("service-worker.js").catch(() => {});
