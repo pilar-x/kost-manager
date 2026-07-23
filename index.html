@@ -91,25 +91,47 @@ td{padding:10px 14px;color:var(--text);border-top:1px solid #EEECE3;white-space:
 .modal-close{border:none;background:#F1EFE8;border-radius:8px;width:30px;height:30px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
 
 /* Public view */
-.public-wrap{min-height:640px;background:var(--bg);border-radius:18px;border:1px solid var(--border);overflow:hidden;position:relative;}
-.public-header{position:relative;background:linear-gradient(120deg,#0F2E1C 0%,#1B4B2C 55%,#173F27 100%);padding:34px 24px 46px;text-align:center;overflow:hidden;}
+.public-wrap{min-height:640px;background:var(--bg);border-radius:18px;border:1px solid var(--border);overflow:hidden;position:relative;padding-bottom:64px;}
+.public-header{position:relative;background:linear-gradient(120deg,#0F2E1C 0%,#1B4B2C 55%,#173F27 100%);padding:18px 20px 30px;text-align:center;overflow:hidden;}
 .public-header .dotpattern{position:absolute;inset:0;background-image:radial-gradient(rgba(205,163,64,.35) 1px,transparent 1.4px);background-size:16px 16px;-webkit-mask-image:radial-gradient(circle at 85% 90%,black 0%,black 35%,transparent 70%);mask-image:radial-gradient(circle at 85% 90%,black 0%,black 35%,transparent 70%);pointer-events:none;}
 .public-header .glow{position:absolute;inset:0;background:radial-gradient(circle at 88% 6%,rgba(205,163,64,.25),transparent 50%),radial-gradient(circle at 4% 96%,rgba(255,255,255,.05),transparent 45%);pointer-events:none;}
-.public-header .leaf-tl{position:absolute;top:-14px;left:-18px;width:130px;opacity:.85;transform:rotate(-6deg);pointer-events:none;}
-.public-header .leaf-bl{position:absolute;bottom:-10px;left:6px;width:88px;opacity:.8;transform:rotate(8deg) scaleX(-1);pointer-events:none;}
-.public-header-inner{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:20px;max-width:480px;margin:0 auto;}
-.public-header-inner img.logo{width:108px;height:108px;object-fit:contain;flex-shrink:0;}
-.public-title{color:#FFFDF6;font-size:34px;line-height:1.1;font-weight:800;margin:0 0 6px;font-family:'Playfair Display',Georgia,serif;letter-spacing:.3px;
-  text-shadow:1px 1px 0 #0a2416,2px 2px 0 #0a2416,3px 3px 0 #0a2416,4px 4px 0 #061a0f,5px 6px 10px rgba(0,0,0,.45);}
-.public-wave{position:absolute;bottom:-1px;left:0;width:100%;height:38px;display:block;}
-.public-body{padding:24px 28px;position:relative;}
-.public-watermark{position:absolute;top:4px;right:12px;width:120px;opacity:.06;pointer-events:none;}
-.owner-login-btn{position:absolute;top:16px;right:16px;display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:9px;padding:6px 12px;font-size:12px;cursor:pointer;font-family:inherit;}
+.public-header-inner{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:12px;max-width:480px;margin:0 auto;}
+.public-header-inner img.logo{width:52px;height:52px;object-fit:contain;flex-shrink:0;}
+.public-title{color:#FFFDF6;font-size:22px;line-height:1.15;font-weight:800;margin:0;font-family:'Playfair Display',Georgia,serif;letter-spacing:.2px;
+  text-shadow:1px 1px 0 #0a2416,2px 2px 0 #0a2416,3px 4px 8px rgba(0,0,0,.4);}
+.public-slogan{color:#D9B968;font-size:11.5px;font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-top:2px;}
+.public-location{position:relative;z-index:1;color:#C9D9CE;font-size:12px;margin:10px auto 0;max-width:480px;display:flex;align-items:center;justify-content:center;gap:5px;}
+.public-header-actions{position:relative;z-index:1;display:flex;gap:8px;justify-content:center;margin-top:12px;}
+.public-header-actions a{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;text-decoration:none;border-radius:999px;padding:7px 14px;}
+.public-header-actions .btn-wa{background:#EA9010;color:#3A2503;}
+.public-header-actions .btn-maps{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.35);}
+.public-wave{position:absolute;bottom:-1px;left:0;width:100%;height:26px;display:block;}
+.public-body{padding:20px 20px 8px;position:relative;}
+.public-watermark{position:absolute;top:4px;right:12px;width:100px;opacity:.05;pointer-events:none;}
+.owner-icon-btn{position:absolute;top:12px;right:12px;z-index:2;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:999px;width:32px;height:32px;cursor:pointer;}
+
+/* Facility badges (public) */
+.fac-badge{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:600;color:#374151;background:#F1EFE8;border-radius:999px;padding:4px 9px;}
+.fac-more{display:inline-flex;align-items:center;font-size:11.5px;font-weight:600;color:#8A6A1D;background:#FAEEDA;border-radius:999px;padding:4px 9px;cursor:pointer;border:none;font-family:inherit;}
+
+/* Unit photo placeholder */
+.unit-photo{width:100%;aspect-ratio:16/10;background:linear-gradient(135deg,#EDE7D3 0%,#DCCB9E 100%);display:flex;align-items:center;justify-content:center;font-size:30px;}
+
+/* Prominent price */
+.price-main{font-size:21px;font-weight:800;color:#173F27;line-height:1.2;}
+.price-sub{font-size:11px;color:#9A988F;margin-top:2px;}
+
+/* Sticky contact bar */
+.sticky-contact-bar{position:absolute;bottom:0;left:0;right:0;display:flex;gap:8px;padding:10px 16px;background:#fff;border-top:1px solid var(--border);z-index:5;}
+.sticky-contact-bar a{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;font-size:13px;font-weight:700;text-decoration:none;border-radius:9px;padding:10px 0;}
+.sticky-contact-bar .btn-wa{background:#173F27;color:#fff;}
+.sticky-contact-bar .btn-maps{background:#fff;color:#173F27;border:1px solid #173F27;}
 
 @media (max-width:700px){
-  .public-header-inner{flex-direction:column;gap:12px;}
-  .public-header-inner img.logo{width:84px;height:84px;}
-  .public-title{font-size:26px;text-align:center;}
+  .public-header-inner img.logo{width:46px;height:46px;}
+  .public-title{font-size:19px;}
+}
+
 .tab-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:10px;}
 .tab-header h2{margin:0;font-size:20px;font-weight:700;color:#1B2A41;}
 .tab-actions{display:flex;gap:8px;flex-wrap:wrap;}
@@ -2166,6 +2188,34 @@ function estimateUnitValue(u){
 function badge(text,fg,bg){ return `<span class="badge" style="color:${fg};background:${bg}">${text}</span>`; }
 
 // ================= RENDER: PUBLIC VIEW =================
+const FACILITY_PRIORITY = ["kamar mandi","wifi","parkir","almari","lemari","mushola","tempat tidur"];
+const FACILITY_EMOJI = [
+  [["kamar mandi"],"🚿"],[["wifi"],"📶"],[["parkir"],"🚗"],[["almari","lemari"],"🗄️"],
+  [["mushola"],"🕌"],[["tempat tidur"],"🛏️"],[["meja","kursi"],"🪑"],[["listrik"],"⚡"],
+  [["sampah"],"🗑️"],[["keamanan"],"🛡️"],[["jemuran"],"👕"],[["ruang tamu"],"🛋️"],
+  [["cantelan"],"🧷"],[["dapur"],"🍳"],[["garasi"],"🚙"],
+];
+function facilityEmoji(name){
+  const n = name.toLowerCase();
+  for(const [keys,emoji] of FACILITY_EMOJI){ if(keys.some(k=>n.includes(k))) return emoji; }
+  return "✓";
+}
+function toggleMoreFacilities(unitId){
+  const span = document.getElementById("hiddenFac-"+unitId);
+  const btn = document.getElementById("facMoreBtn-"+unitId);
+  if(!span) return;
+  const isHidden = span.style.display === "none";
+  span.style.display = isHidden ? "contents" : "none";
+  if(btn) btn.style.display = isHidden ? "none" : "inline-flex";
+}
+function sortFacilitiesByPriority(list){
+  return [...list].sort((a,b)=>{
+    const ai = FACILITY_PRIORITY.findIndex(k=>a.toLowerCase().includes(k));
+    const bi = FACILITY_PRIORITY.findIndex(k=>b.toLowerCase().includes(k));
+    return (ai===-1?99:ai) - (bi===-1?99:bi);
+  });
+}
+
 function renderPublicView(){
   const available = units.filter(u=>u.status==="kosong");
   const occupied = units.filter(u=>u.status==="terisi");
@@ -2177,12 +2227,22 @@ function renderPublicView(){
     const msg = isAvailable
       ? `Halo, saya tertarik dengan kamar ${u.nomor} di ${p?.nama||"Griya Jaten Indah"}. Boleh info lebih lanjut?`
       : `Halo, saya mau tanya soal kamar ${u.nomor} di ${p?.nama||"Griya Jaten Indah"} yang sedang terisi. Kira-kira kapan bisa tersedia lagi ya?`;
-    const fasilitasBadges = u.fasilitas.map(f=>badge(esc(f),"#0F6E56","#E1F5EE")).join(" ");
-    const fasilitasUmumBadges = (p?.fasilitasUmum||[]).map(f=>badge(esc(f),"#8A6A1D","#FAEEDA")).join(" ");
+
+    const allFacilities = sortFacilitiesByPriority([...(u.fasilitas||[]), ...((p&&p.fasilitasUmum)||[])]);
+    const shownFac = allFacilities.slice(0,5);
+    const moreFacCount = allFacilities.length - shownFac.length;
+    const hiddenFac = allFacilities.slice(5);
+    const facHtml = `
+      <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;">
+        ${shownFac.map(f=>`<span class="fac-badge">${facilityEmoji(f)} ${esc(f)}</span>`).join("")}
+        ${hiddenFac.length>0 ? `<span id="hiddenFac-${u.id}" style="display:none;">${hiddenFac.map(f=>`<span class="fac-badge">${facilityEmoji(f)} ${esc(f)}</span>`).join("")}</span>
+        <button class="fac-more" id="facMoreBtn-${u.id}" onclick="toggleMoreFacilities('${u.id}')">+${hiddenFac.length} fasilitas lainnya</button>` : ""}
+      </div>`;
+
     const hargaBlock = u.hargaBulanan>0
-      ? `<div style="font-size:13px;margin-bottom:12px;">
-           <div style="font-weight:700;color:#173F27;">${rupiah(u.hargaBulanan)}<span style="font-weight:400;font-size:11.5px;color:#9A988F;"> /bulan</span></div>
-           <div style="font-size:11.5px;color:#9A988F;">atau ${rupiah(u.hargaTahunan)} /tahun (bayar 11 bulan, hemat 1 bulan)</div>
+      ? `<div style="margin-bottom:12px;">
+           <div class="price-main">${rupiah(u.hargaBulanan)}<span style="font-size:12px;font-weight:500;color:#9A988F;"> /bulan</span></div>
+           <div class="price-sub">atau ${rupiah(u.hargaTahunan)} /tahun (bayar 11 bulan, hemat 1 bulan)</div>
          </div>`
       : `<div style="font-size:12px;color:#9A988F;margin-bottom:12px;">Hubungi untuk info harga</div>`;
     const belumTersediaBlock = !isAvailable ? `
@@ -2190,22 +2250,25 @@ function renderPublicView(){
         <div style="font-size:12px;color:#63430B;font-weight:600;">${ICONS.clock} Perkiraan kosong: ${t?formatTanggal(t.jatuhTempo):"-"}</div>
         <div style="font-size:10.5px;color:#8A6A1D;margin-top:2px;">Tanggal ini jatuh tempo sewa saat ini dan bisa diperpanjang penyewa, jadi bukan kepastian mutlak.</div>
       </div>` : "";
+
     return `
-    <div class="card" style="padding:16px;width:${state.isMobile?'100%':'240px'};box-sizing:border-box;opacity:${isAvailable?1:0.92}">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
-        ${badge(TIPE_LABEL[p?.tipe],"#8A6A1D","#FAEEDA")}
-        ${isAvailable ? badge("Tersedia sekarang","#27500A","#EAF3DE") : badge("Belum tersedia","#791F1F","#FCEBEB")}
+    <div class="card" style="width:${state.isMobile?'100%':'240px'};box-sizing:border-box;overflow:hidden;opacity:${isAvailable?1:0.92}">
+      <div class="unit-photo">🏠</div>
+      <div style="padding:14px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;gap:6px;">
+          ${badge(TIPE_LABEL[p?.tipe],"#8A6A1D","#FAEEDA")}
+          ${isAvailable ? badge("Tersedia sekarang","#27500A","#EAF3DE") : badge("Belum tersedia","#791F1F","#FCEBEB")}
+        </div>
+        <div style="font-weight:700;font-size:15px;color:#173F27;margin:0 0 2px;">${esc(p?.nama)}</div>
+        <div style="font-size:12px;color:#9A988F;margin-bottom:8px;">Kamar ${esc(u.nomor)} · ${esc(u.tipeKamar)}</div>
+        ${facHtml}
+        ${hargaBlock}
+        ${belumTersediaBlock}
+        <a href="${waLink(state.kontakPemilik,msg)}" target="_blank" rel="noopener noreferrer"
+          style="display:flex;align-items:center;justify-content:center;gap:6px;background:${isAvailable?'#173F27':'#fff'};color:${isAvailable?'#fff':'#173F27'};border:${isAvailable?'none':'1px solid #173F27'};border-radius:9px;padding:9px 0;font-size:13px;font-weight:600;text-decoration:none;">
+          ${ICONS.wa} ${isAvailable?"Tanya via WhatsApp":"Tanya / catat minat"}
+        </a>
       </div>
-      <div style="font-weight:700;font-size:15px;color:#173F27;margin:0 0 2px;">${esc(p?.nama)}</div>
-      <div style="font-size:12px;color:#9A988F;margin-bottom:8px;">Kamar ${esc(u.nomor)} · ${esc(u.tipeKamar)}</div>
-      <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;">${fasilitasBadges}</div>
-      ${fasilitasUmumBadges ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px;">${fasilitasUmumBadges}</div>` : ""}
-      ${hargaBlock}
-      ${belumTersediaBlock}
-      <a href="${waLink(state.kontakPemilik,msg)}" target="_blank" rel="noopener noreferrer"
-        style="display:flex;align-items:center;justify-content:center;gap:6px;background:${isAvailable?'#173F27':'#fff'};color:${isAvailable?'#fff':'#173F27'};border:${isAvailable?'none':'1px solid #173F27'};border-radius:9px;padding:9px 0;font-size:13px;font-weight:600;text-decoration:none;">
-        ${ICONS.wa} ${isAvailable?"Tanya via WhatsApp":"Tanya / catat minat"}
-      </a>
     </div>`;
   }
 
@@ -2222,27 +2285,25 @@ function renderPublicView(){
     <p style="font-size:13px;color:#6B7280;margin:0 0 16px;">Lihat perkiraan tanggal kosong supaya bisa merencanakan waktu sewa.</p>
     <div class="flex-wrap-gap">${occupied.map(unitCard).join("")}</div>` : "";
 
+  const genericMsg = "Halo, saya tertarik dengan kost di Griya Jaten Indah. Boleh info lebih lanjut?";
+
   return `
   <div class="public-wrap">
+    <button class="owner-icon-btn" onclick="openOwnerLogin()" title="Masuk sebagai pemilik">${ICONS.lock}</button>
     <div class="public-header">
       <div class="dotpattern"></div>
       <div class="glow"></div>
-      <svg viewBox="0 0 1200 300" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;">
-        <path d="M-40,40 C160,-20 260,120 520,60 C760,10 900,140 1260,50" stroke="rgba(205,163,64,0.55)" stroke-width="1.5" fill="none"/>
-      </svg>
-      <img class="leaf-tl" src="${LEAF_GREEN}" alt="">
-      <img class="leaf-bl" src="${LEAF_GOLD}" alt="">
       <div class="public-header-inner">
         <img class="logo" src="${LOGO_ICON_GOLD}" alt="Griya Jaten Indah">
-        <div style="text-align:${state.isMobile?'center':'left'}">
+        <div style="text-align:left;">
           <h1 class="public-title">Griya Jaten Indah</h1>
-          <div style="display:flex;align-items:center;justify-content:${state.isMobile?'center':'flex-start'};gap:10px;margin-bottom:8px;">
-            <span style="width:28px;height:1px;background:rgba(205,163,64,.6);"></span>
-            <span style="color:#D9B968;font-size:13px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;">Family Homestay &amp; Kost</span>
-          </div>
-          <p style="color:#EAF1E6;font-size:13.5px;margin:0 0 10px;">Nyaman tinggalnya, tenang keluarganya.</p>
-          <a href="${GMAPS_URL}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:6px;color:#D9B968;font-size:12px;font-weight:600;text-decoration:none;border:1px solid rgba(217,185,104,.5);border-radius:999px;padding:5px 12px;">${ICONS.pin} Lihat lokasi di Google Maps</a>
+          <div class="public-slogan">Family Homestay &amp; Kost</div>
         </div>
+      </div>
+      <div class="public-location">${ICONS.pin} Jaten, Sendangadi, Kec. Mlati, Sleman</div>
+      <div class="public-header-actions">
+        <a class="btn-wa" href="${waLink(state.kontakPemilik,genericMsg)}" target="_blank" rel="noopener noreferrer">${ICONS.wa} WhatsApp</a>
+        <a class="btn-maps" href="${GMAPS_URL}" target="_blank" rel="noopener noreferrer">${ICONS.pin} Maps</a>
       </div>
       <svg class="public-wave" viewBox="0 0 1200 60" preserveAspectRatio="none">
         <path d="M0,22 C280,58 340,-8 620,26 C860,54 960,4 1200,24 L1200,60 L0,60 Z" fill="#F6F8F2"/>
@@ -2256,7 +2317,10 @@ function renderPublicView(){
       ${availableSection}
       ${occupiedSection}
     </div>
-    <button class="owner-login-btn" onclick="openOwnerLogin()">${ICONS.lock} Masuk sebagai pemilik</button>
+    <div class="sticky-contact-bar">
+      <a class="btn-wa" href="${waLink(state.kontakPemilik,genericMsg)}" target="_blank" rel="noopener noreferrer">${ICONS.wa} WhatsApp</a>
+      <a class="btn-maps" href="${GMAPS_URL}" target="_blank" rel="noopener noreferrer">${ICONS.pin} Lokasi</a>
+    </div>
   </div>`;
 }
 
