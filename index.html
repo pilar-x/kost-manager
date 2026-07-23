@@ -122,7 +122,7 @@ td{padding:10px 14px;color:var(--text);border-top:1px solid #EEECE3;white-space:
 .price-sub{font-size:11px;color:#9A988F;margin-top:2px;}
 
 /* Sticky contact bar */
-.sticky-contact-bar{position:absolute;bottom:0;left:0;right:0;display:flex;gap:8px;padding:10px 16px;background:#fff;border-top:1px solid var(--border);z-index:5;}
+.sticky-contact-bar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:600px;display:flex;gap:8px;padding:10px 16px;background:#fff;border-top:1px solid var(--border);z-index:50;box-shadow:0 -4px 14px rgba(0,0,0,.08);box-sizing:border-box;}
 .sticky-contact-bar a{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;font-size:13px;font-weight:700;text-decoration:none;border-radius:9px;padding:10px 0;}
 .sticky-contact-bar .btn-wa{background:#173F27;color:#fff;}
 .sticky-contact-bar .btn-maps{background:#fff;color:#173F27;border:1px solid #173F27;}
@@ -2317,10 +2317,10 @@ function renderPublicView(){
       ${availableSection}
       ${occupiedSection}
     </div>
-    <div class="sticky-contact-bar">
-      <a class="btn-wa" href="${waLink(state.kontakPemilik,genericMsg)}" target="_blank" rel="noopener noreferrer">${ICONS.wa} WhatsApp</a>
-      <a class="btn-maps" href="${GMAPS_URL}" target="_blank" rel="noopener noreferrer">${ICONS.pin} Lokasi</a>
-    </div>
+  </div>
+  <div class="sticky-contact-bar">
+    <a class="btn-wa" href="${waLink(state.kontakPemilik,genericMsg)}" target="_blank" rel="noopener noreferrer">${ICONS.wa} WhatsApp</a>
+    <a class="btn-maps" href="${GMAPS_URL}" target="_blank" rel="noopener noreferrer">${ICONS.pin} Lokasi</a>
   </div>`;
 }
 
